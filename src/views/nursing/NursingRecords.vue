@@ -439,44 +439,90 @@ const handleDelete = (id) => {
 // 处理完成状态变更
 const handleStatusChange = async (row) => {
   try {
-    const response = await updateNursingRecord({
+    // 保存当前状态，用于恢复
+    const originalStatus = row.completed
+    
+    // 确保completed为数字类型，后端可能期望数字
+    const updateData = {
       id: row.id,
-      completed: row.completed
-    })
-    if (response.data.success) {
-      ElMessage.success('状态更新成功')
+      completed: row.completed === '1' ? 1 : 0
+    }
+    
+    console.log('更新状态数据:', updateData)
+    const response = await updateNursingRecord(updateData)
+    
+    console.log('状态更新响应:', response)
+    
+    // 增强响应处理，兼容不同的响应格式
+    if (response && response.data) {
+      if (response.data.success) {
+        // 更新成功，确保本地数据类型正确
+        row.completed = String(updateData.completed)
+        ElMessage.success('状态更新成功')
+      } else if (response.data.message) {
+        // 更新失败，恢复原状态
+        row.completed = originalStatus
+        ElMessage.error(response.data.message || '状态更新失败')
+      } else {
+        // 没有success字段，但响应成功
+        row.completed = String(updateData.completed)
+        ElMessage.success('状态更新成功')
+      }
     } else {
-      // 恢复原状态
-      row.completed = row.completed === '1' ? '0' : '1'
-      ElMessage.error(response.data.message || '状态更新失败')
+      // 无效响应，恢复原状态
+      row.completed = originalStatus
+      ElMessage.error('状态更新失败：无效的响应格式')
     }
   } catch (error) {
     console.error('状态更新失败:', error)
     // 恢复原状态
     row.completed = row.completed === '1' ? '0' : '1'
-    ElMessage.error('状态更新失败')
+    ElMessage.error('状态更新失败：' + (error.message || '网络错误'))
   }
 }
 
 // 处理评估变更
 const handleEvaluationChange = async (row) => {
   try {
-    const response = await updateNursingRecord({
+    // 保存当前评估值，用于恢复
+    const originalEvaluation = row.evaluation
+    
+    // 确保evaluation为数字类型
+    const updateData = {
       id: row.id,
-      evaluation: row.evaluation
-    })
-    if (response.data.success) {
-      ElMessage.success('评估更新成功')
+      evaluation: Number(row.evaluation)
+    }
+    
+    console.log('更新评估数据:', updateData)
+    const response = await updateNursingRecord(updateData)
+    
+    console.log('评估更新响应:', response)
+    
+    // 增强响应处理，兼容不同的响应格式
+    if (response && response.data) {
+      if (response.data.success) {
+        // 更新成功，确保本地数据类型正确
+        row.evaluation = updateData.evaluation
+        ElMessage.success('评估更新成功')
+      } else if (response.data.message) {
+        // 更新失败，恢复原评估值
+        row.evaluation = originalEvaluation
+        ElMessage.error(response.data.message || '评估更新失败')
+      } else {
+        // 没有success字段，但响应成功
+        row.evaluation = updateData.evaluation
+        ElMessage.success('评估更新成功')
+      }
     } else {
-      // 恢复原评估值
-      row.evaluation = 2 // 默认中
-      ElMessage.error(response.data.message || '评估更新失败')
+      // 无效响应，恢复原评估值
+      row.evaluation = originalEvaluation
+      ElMessage.error('评估更新失败：无效的响应格式')
     }
   } catch (error) {
     console.error('评估更新失败:', error)
     // 恢复原评估值
     row.evaluation = 2 // 默认中
-    ElMessage.error('评估更新失败')
+    ElMessage.error('评估更新失败：' + (error.message || '网络错误'))
   }
 }
 
