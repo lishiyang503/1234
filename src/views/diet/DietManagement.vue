@@ -38,12 +38,13 @@
               class="filter-select"
               size="large"
             >
-              <el-option label="糖尿病饮食" value="diabetes" />
-              <el-option label="高血压饮食" value="hypertension" />
-              <el-option label="高血脂饮食" value="hyperlipidemia" />
-              <el-option label="低盐饮食" value="lowSalt" />
-              <el-option label="低脂肪饮食" value="lowFat" />
-              <el-option label="其他" value="other" />
+              <el-option label="糖尿病饮食" value="糖尿病饮食" />
+              <el-option label="高血压饮食" value="高血压饮食" />
+              <el-option label="高血脂饮食" value="高血脂饮食" />
+              <el-option label="低盐饮食" value="低盐饮食" />
+              <el-option label="低脂肪饮食" value="低脂肪饮食" />
+              <el-option label="软食" value="软食" />
+              <el-option label="其他" value="其他" />
             </el-select>
             <el-button 
               type="primary" 
@@ -60,14 +61,14 @@
           <div class="table-container">
             <div class="diet-cards-grid">
               <div 
-                v-for="diet in dietList" 
+                v-for="(diet, index) in dietList" 
                 :key="diet.id"
                 class="diet-card"
               >
                 <!-- 卡片头部 -->
                 <div class="diet-card-header">
                   <div class="diet-id-section">
-                    <span class="diet-id">ID: {{ diet.id }}</span>
+                    <span class="diet-id">ID: {{ index + 1 }}</span>
                     <el-tag 
                       :type="getDietTypeColor(diet.dietType)" 
                       class="diet-type-tag"
@@ -179,21 +180,37 @@
         <el-row :gutter="25">
           <el-col :span="12">
             <el-form-item label="老人姓名" prop="residentName" class="form-item">
-              <el-input 
-                v-model="dietForm.residentName" 
-                placeholder="请输入老人姓名" 
+              <el-select
+                v-model="dietForm.residentId"
+                placeholder="请选择老人"
                 size="large"
                 class="form-input"
-              />
+                :disabled="isEditMode"
+                @change="handleResidentChange"
+                filterable
+              >
+                <el-option
+                  v-for="resident in residentList"
+                  :key="resident.id"
+                  :label="resident.name"
+                  :value="resident.id"
+                >
+                  <span>{{ resident.name }}</span>
+                  <span style="float: right; color: #8492a6; font-size: 12px">
+                    {{ resident.roomNumber }} - {{ resident.bedNumber }}
+                  </span>
+                </el-option>
+              </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="房间号" prop="roomNumber" class="form-item">
-              <el-input 
-                v-model="dietForm.roomNumber" 
-                placeholder="请输入房间号" 
+              <el-input
+                v-model="dietForm.roomNumber"
+                placeholder="自动填充"
                 size="large"
                 class="form-input"
+                :disabled="true"
               />
             </el-form-item>
           </el-col>
@@ -201,28 +218,30 @@
         <el-row :gutter="25">
           <el-col :span="12">
             <el-form-item label="床位号" prop="bedNumber" class="form-item">
-              <el-input 
-                v-model="dietForm.bedNumber" 
-                placeholder="请输入床位号" 
+              <el-input
+                v-model="dietForm.bedNumber"
+                placeholder="自动填充"
                 size="large"
                 class="form-input"
+                :disabled="true"
               />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="饮食类型" prop="dietType" class="form-item">
-              <el-select 
-                v-model="dietForm.dietType" 
+              <el-select
+                v-model="dietForm.dietType"
                 placeholder="请选择饮食类型"
                 size="large"
                 class="form-select"
               >
-                <el-option label="糖尿病饮食" value="diabetes" />
-                <el-option label="高血压饮食" value="hypertension" />
-                <el-option label="高血脂饮食" value="hyperlipidemia" />
-                <el-option label="低盐饮食" value="lowSalt" />
-                <el-option label="低脂肪饮食" value="lowFat" />
-                <el-option label="其他" value="other" />
+                <el-option label="糖尿病饮食" value="糖尿病饮食" />
+                <el-option label="高血压饮食" value="高血压饮食" />
+                <el-option label="高血脂饮食" value="高血脂饮食" />
+                <el-option label="低盐饮食" value="低盐饮食" />
+                <el-option label="低脂肪饮食" value="低脂肪饮食" />
+                <el-option label="软食" value="软食" />
+                <el-option label="其他" value="其他" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -272,15 +291,20 @@ import {
   House, 
   Document, 
   Calendar, 
-  List 
+  List,
+  User
 } from '@element-plus/icons-vue'
 import { getDietList, addDiet, updateDiet, deleteDiet } from '@/api/diet'
+import { getResidentList } from '@/api/resident'
 
 // 搜索和筛选参数
 const searchParams = reactive({
   name: '',
   dietType: ''
 })
+
+// 老人列表数据
+const residentList = ref([])
 
 // 表格数据
 const dietList = ref([])
@@ -319,27 +343,112 @@ const dietRules = {
 // 生命周期
 onMounted(() => {
   fetchDietList()
+  fetchResidentList()
 })
+
+// 获取老人列表
+const fetchResidentList = async () => {
+  try {
+    // 先获取已添加膳食需求的老人ID列表
+    let existingResidentIds = []
+    try {
+      const dietResponse = await getDietList({})
+      if (dietResponse.data && dietResponse.data.success) {
+        const dietListData = dietResponse.data.data.list || []
+        existingResidentIds = dietListData.map(diet => diet.residentId || diet.resident_id)
+      } else if (dietResponse.data && dietResponse.data.data) {
+        const dietListData = dietResponse.data.data.list || dietResponse.data.data || []
+        existingResidentIds = dietListData.map(diet => diet.residentId || diet.resident_id)
+      }
+    } catch (e) {
+      console.error('获取膳食需求列表失败:', e)
+    }
+    
+    // 获取老人列表并过滤
+    const response = await getResidentList({})
+    let allResidents = []
+    if (response.data && response.data.success) {
+      allResidents = response.data.data.list || []
+    } else if (Array.isArray(response.data)) {
+      allResidents = response.data
+    } else if (response.data && response.data.data) {
+      allResidents = response.data.data.list || response.data.data || []
+    }
+    
+    // 过滤条件：
+    // 1. 状态为'入住'的老人
+    // 2. 未添加膳食需求的老人
+    residentList.value = allResidents.filter(resident => 
+      resident.status === '入住' && !existingResidentIds.includes(resident.id)
+    )
+  } catch (error) {
+    console.error('获取老人列表失败:', error)
+  }
+}
+
+// 选择老人后自动填充房间号和床位号
+const handleResidentChange = (residentId) => {
+  if (!residentId) {
+    dietForm.roomNumber = ''
+    dietForm.bedNumber = ''
+    dietForm.residentName = ''
+    return
+  }
+  const selectedResident = residentList.value.find(r => r.id === residentId)
+  if (selectedResident) {
+    dietForm.residentName = selectedResident.name
+    dietForm.roomNumber = selectedResident.roomNumber
+    dietForm.bedNumber = selectedResident.bedNumber
+  }
+}
 
 // 获取膳食需求列表
 const fetchDietList = async () => {
   loading.value = true
   try {
-    const response = await getDietList({
-      ...searchParams,
-      page: currentPage.value,
-      pageSize: pageSize.value
-    })
+    // 构建查询参数，确保dietType正确传递
+    const params = {}
+    // 只有当dietType不为空时才添加到查询参数
+    if (searchParams.dietType && searchParams.dietType !== '') {
+      params.dietType = searchParams.dietType
+    }
+    // 只有当name不为空时才添加到查询参数
+    if (searchParams.name && searchParams.name.trim() !== '') {
+      params.name = searchParams.name.trim()
+    }
+    params.page = currentPage.value
+    params.pageSize = pageSize.value
     
-    if (response.data.success) {
-      dietList.value = response.data.data.list || []
-      total.value = response.data.data.total || 0
+    console.log('请求参数:', params)
+    const response = await getDietList(params)
+    
+    console.log('响应数据:', response)
+    
+    // 简化响应处理，适配不同的返回格式
+    if (response.data) {
+      if (response.data.success) {
+        dietList.value = response.data.data.list || []
+        total.value = response.data.data.total || 0
+      } else {
+        // 如果success为false，尝试直接使用data
+        dietList.value = response.data.data || []
+        total.value = response.data.data ? response.data.data.length : 0
+        ElMessage.warning(response.data.message || '数据获取成功但状态标记为失败')
+      }
+    } else if (Array.isArray(response)) {
+      // 兼容直接返回数组的情况
+      dietList.value = response
+      total.value = response.length
     } else {
-      ElMessage.error(response.data.message || '获取膳食需求列表失败')
+      ElMessage.error('获取膳食需求列表失败: 数据格式不正确')
+      dietList.value = []
+      total.value = 0
     }
   } catch (error) {
     console.error('获取膳食需求列表失败:', error)
     ElMessage.error('获取膳食需求列表失败，请重试')
+    dietList.value = []
+    total.value = 0
   } finally {
     loading.value = false
   }
@@ -364,13 +473,15 @@ const tableRowClassName = ({ row, rowIndex }) => {
 
 // 获取饮食类型显示名称
 const getDietTypeName = (type) => {
+  // 数据库中存储的是中文值，直接返回
   const typeMap = {
-    diabetes: '糖尿病饮食',
-    hypertension: '高血压饮食',
-    hyperlipidemia: '高血脂饮食',
-    lowSalt: '低盐饮食',
-    lowFat: '低脂肪饮食',
-    other: '其他'
+    '糖尿病饮食': '糖尿病饮食',
+    '高血压饮食': '高血压饮食',
+    '高血脂饮食': '高血脂饮食',
+    '低盐饮食': '低盐饮食',
+    '低脂肪饮食': '低脂肪饮食',
+    '软食': '软食',
+    '其他': '其他'
   }
   return typeMap[type] || type
 }
@@ -378,12 +489,13 @@ const getDietTypeName = (type) => {
 // 获取饮食类型标签颜色
 const getDietTypeColor = (type) => {
   const colorMap = {
-    diabetes: 'warning',
-    hypertension: 'danger',
-    hyperlipidemia: 'success',
-    lowSalt: 'info',
-    lowFat: 'primary',
-    other: 'gray'
+    '糖尿病饮食': 'warning',
+    '高血压饮食': 'danger',
+    '高血脂饮食': 'success',
+    '低盐饮食': 'info',
+    '低脂肪饮食': 'primary',
+    '软食': 'success',
+    '其他': 'gray'
   }
   return colorMap[type] || 'default'
 }
@@ -400,7 +512,11 @@ const showAddDialog = () => {
 const showEditDialog = (row) => {
   isEditMode.value = true
   dialogTitle.value = '编辑膳食需求'
-  Object.assign(dietForm, row)
+  // 使用深拷贝确保包含完整数据，同时保持dietForm的响应式
+  const deepCopiedRow = JSON.parse(JSON.stringify(row))
+  Object.keys(dietForm).forEach(key => {
+    dietForm[key] = deepCopiedRow[key]
+  })
   dialogVisible.value = true
 }
 
@@ -425,32 +541,43 @@ const handleSubmit = async () => {
     // 表单验证
     await dietFormRef.value.validate()
     
+    let response
+    let successMessage
+    let errorMessage
+    
     if (isEditMode.value) {
       // 编辑膳食需求
-      const response = await updateDiet(dietForm)
-      if (response.data.success) {
-        ElMessage.success('编辑成功')
-        dialogVisible.value = false
-        fetchDietList()
-      } else {
-        ElMessage.error(response.data.message || '编辑失败')
-      }
+      response = await updateDiet(dietForm)
+      successMessage = '编辑成功'
+      errorMessage = '编辑失败'
     } else {
       // 添加膳食需求
-      const response = await addDiet(dietForm)
-      if (response.data.success) {
-        ElMessage.success('添加成功')
+      response = await addDiet(dietForm)
+      successMessage = '添加成功'
+      errorMessage = '添加失败'
+    }
+    
+    // 简化响应处理，适配不同的返回格式
+    if (response.data) {
+      if (response.data.success || response.data) {
+        ElMessage.success(successMessage)
         dialogVisible.value = false
         fetchDietList()
       } else {
-        ElMessage.error(response.data.message || '添加失败')
+        ElMessage.error(response.data.message || errorMessage)
       }
+    } else {
+      ElMessage.success(successMessage)
+      dialogVisible.value = false
+      fetchDietList()
     }
   } catch (error) {
     console.error('提交失败:', error)
-    if (error.name !== 'Error' || error.message !== '表单验证失败') {
-      ElMessage.error('操作失败，请重试')
+    if (error.name === 'Error' && error.message === '表单验证失败') {
+      // 表单验证失败，不显示额外提示
+      return
     }
+    ElMessage.error('操作失败，请重试')
   }
 }
 
@@ -463,11 +590,21 @@ const handleDelete = (id) => {
   }).then(async () => {
     try {
       const response = await deleteDiet(id)
-      if (response.data.success) {
+      
+      // 简化响应处理，适配不同的返回格式
+      if (response.data) {
+        if (response.data.success || response.data) {
+          ElMessage.success('删除成功')
+          // 刷新膳食需求列表和老人选择列表
+          fetchDietList()
+          fetchResidentList()
+        } else {
+          ElMessage.error(response.data.message || '删除失败')
+        }
+      } else {
         ElMessage.success('删除成功')
         fetchDietList()
-      } else {
-        ElMessage.error(response.data.message || '删除失败')
+        fetchResidentList()
       }
     } catch (error) {
       console.error('删除失败:', error)
