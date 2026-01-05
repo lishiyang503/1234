@@ -396,13 +396,14 @@ const resetForm = () => {
 
 // 提交表单
 const handleSubmit = async () => {
+  let successMessage
+  let errorMessage
+  
   try {
     // 表单验证
     await residentFormRef.value.validate()
     
     let response
-    let successMessage
-    let errorMessage
     
     if (isEditMode.value) {
       // 编辑入住登记
@@ -428,6 +429,11 @@ const handleSubmit = async () => {
     if (error.name === 'Error' && error.message === '表单验证失败') {
       // 表单验证失败，不显示额外提示
       return
+    }
+    
+    // 为errorMessage设置默认值，避免未定义错误
+    if (!errorMessage) {
+      errorMessage = '操作失败'
     }
     
     if (error.response) {
