@@ -86,6 +86,14 @@
             </div>
             <div 
               class="menu-item" 
+              :class="{ active: $route.path.includes('/health-monitoring') }"
+              @click="navigateTo('/health-monitoring')"
+            >
+              <el-icon><Monitor /></el-icon>
+              <span>健康监测</span>
+            </div>
+            <div 
+              class="menu-item" 
               :class="{ active: $route.path.includes('/history') }"
               @click="navigateTo('/history')"
             >

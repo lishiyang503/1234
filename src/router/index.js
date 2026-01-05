@@ -36,7 +36,7 @@ const routes = [
         component: () => import('@/views/diet/DietManagement.vue')
       },
       
-      // 入住退管管理
+      // 档案管理
       {
         path: '/residents',
         name: 'ResidentRegistration',
@@ -46,6 +46,11 @@ const routes = [
         path: '/health',
         name: 'HealthRecords',
         component: () => import('@/views/resident/HealthRecords.vue')
+      },
+      {
+        path: '/health-monitoring',
+        name: 'HealthMonitoring',
+        component: () => import('@/views/resident/HealthMonitoring.vue')
       },
       {
         path: '/history',

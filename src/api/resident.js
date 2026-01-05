@@ -89,3 +89,72 @@ export const getResidentHistory = (params) => {
     params
   })
 }
+
+// 健康监测相关API
+// 血压记录API
+// 获取血压记录列表
+export const getBloodPressureRecords = (params) => {
+  return request({
+    url: '/health-monitoring/blood-pressure',
+    method: 'get',
+    params
+  })
+}
+
+// 添加血压记录
+export const addBloodPressureRecord = (data) => {
+  return request({
+    url: '/health-monitoring/blood-pressure',
+    method: 'post',
+    data
+  })
+}
+
+// 血糖记录API
+// 获取血糖记录列表
+export const getBloodSugarRecords = (params) => {
+  return request({
+    url: '/health-monitoring/blood-sugar',
+    method: 'get',
+    params
+  })
+}
+
+// 添加血糖记录
+export const addBloodSugarRecord = (data) => {
+  return request({
+    url: '/health-monitoring/blood-sugar',
+    method: 'post',
+    data
+  })
+}
+
+// 心率记录API
+// 获取心率记录列表
+export const getHeartRateRecords = (params) => {
+  return request({
+    url: '/health-monitoring/heart-rate',
+    method: 'get',
+    params
+  })
+}
+
+// 添加心率记录
+export const addHeartRateRecord = (data) => {
+  return request({
+    url: '/health-monitoring/heart-rate',
+    method: 'post',
+    data
+  })
+}
+
+
+
+// 获取健康预警
+export const getHealthAlerts = (params) => {
+  return request({
+    url: '/health-monitoring/alerts',
+    method: 'get',
+    params
+  })
+}
