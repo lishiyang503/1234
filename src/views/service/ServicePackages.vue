@@ -41,72 +41,102 @@
             </el-button>
           </div>
           
-          <!-- 服务套餐列表 -->
+          <!-- 服务套餐卡片网格 -->
           <div class="table-container">
-            <el-table
-              :data="servicePackagesList"
-              border
-              stripe
-              style="width: 100%"
-              :row-class-name="tableRowClassName"
-            >
-              <el-table-column prop="id" label="ID" width="80" align="center" />
-              <el-table-column prop="name" label="套餐名称" width="180" />
-              <el-table-column prop="level" label="套餐级别" width="120" align="center">
-                <template #default="scope">
-                  <el-tag :type="getLevelType(scope.row.level)">
-                    {{ scope.row.level }}
-                  </el-tag>
-                </template>
-              </el-table-column>
-              <el-table-column prop="price" label="价格(元/月)" width="150" align="center">
-                <template #default="scope">
-                  <span class="price">{{ scope.row.price }}</span>
-                </template>
-              </el-table-column>
-              <el-table-column prop="description" label="套餐描述" min-width="300">
-                <template #default="scope">
-                  <div class="description">{{ scope.row.description }}</div>
-                </template>
-              </el-table-column>
-              <el-table-column prop="features" label="服务内容" min-width="300">
-                <template #default="scope">
-                  <div class="features-list">
-                    <el-tag
-                      v-for="(feature, index) in scope.row.features"
-                      :key="index"
-                      size="small"
-                      effect="light"
-                      class="feature-tag"
+            <div class="packages-grid">
+              <div 
+                v-for="pkg in servicePackagesList" 
+                :key="pkg.id"
+                class="package-card"
+              >
+                <!-- 卡片头部 -->
+                <div class="package-card-header">
+                  <div class="package-id-section">
+                    <span class="package-id">ID: {{ pkg.id }}</span>
+                    <el-tag 
+                      :type="getLevelType(pkg.level)" 
+                      class="level-tag"
                     >
-                      {{ feature }}
+                      {{ pkg.level }}
                     </el-tag>
                   </div>
-                </template>
-              </el-table-column>
-              <el-table-column prop="status" label="状态" width="100" align="center">
-                <template #default="scope">
-                  <el-switch
-                    v-model="scope.row.status"
-                    active-value="启用"
-                    inactive-value="禁用"
-                    @change="handleStatusChange(scope.row)"
-                  />
-                </template>
-              </el-table-column>
-              <el-table-column label="操作" width="150" align="center">
-                <template #default="scope">
-                  <el-button type="primary" size="small" @click="showEditDialog(scope.row)">
-                    <el-icon><Edit /></el-icon>
-                    编辑
-                  </el-button>
-                  <el-button type="danger" size="small" @click="handleDelete(scope.row.id)">
-                    <el-icon><Delete /></el-icon>
-                    删除
-                  </el-button>
-                </template>
-              </el-table-column>
-            </el-table>
+                  <div class="package-status">
+                    <el-switch
+                      v-model="pkg.status"
+                      active-value="启用"
+                      inactive-value="禁用"
+                      @change="handleStatusChange(pkg)"
+                    />
+                  </div>
+                </div>
+                
+                <!-- 卡片内容 -->
+                <div class="package-card-content">
+                  <div class="package-name-section">
+                    <h3 class="package-name">{{ pkg.name }}</h3>
+                    <div class="package-price">
+                      <el-icon><Money /></el-icon>
+                      <span class="price">¥{{ pkg.price }}/月</span>
+                    </div>
+                  </div>
+                  
+                  <div class="description-section">
+                    <div class="description-title">
+                      <el-icon><Document /></el-icon>
+                      <span>套餐描述</span>
+                    </div>
+                    <div class="description-text">{{ pkg.description }}</div>
+                  </div>
+                  
+                  <div class="features-section">
+                    <div class="features-title">
+                      <el-icon><List /></el-icon>
+                      <span>服务内容</span>
+                    </div>
+                    <div class="features-content">
+                      {{ pkg.features }}
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- 卡片底部 -->
+                <div class="package-card-footer">
+                  <div class="action-buttons">
+                    <el-button 
+                      type="primary" 
+                      size="small" 
+                      @click="showEditDialog(pkg)"
+                      class="edit-btn"
+                    >
+                      <el-icon><Edit /></el-icon>
+                      编辑
+                    </el-button>
+                    <el-button 
+                      type="danger" 
+                      size="small" 
+                      @click="handleDelete(pkg.id)"
+                      class="delete-btn"
+                    >
+                      <el-icon><Delete /></el-icon>
+                      删除
+                    </el-button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 空状态 -->
+            <div v-if="!servicePackagesList.length" class="empty-state">
+              <el-empty 
+                description="暂无服务套餐"
+                :image-size="100"
+              >
+                <el-button type="primary" @click="showAddDialog">
+                  <el-icon><Plus /></el-icon>
+                  添加套餐
+                </el-button>
+              </el-empty>
+            </div>
           </div>
           
           <!-- 分页 -->
@@ -204,6 +234,16 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { 
+  Plus, 
+  Edit, 
+  Delete, 
+  Search, 
+  Money, 
+  Document, 
+  List,
+  Calendar 
+} from '@element-plus/icons-vue'
 import { getServicePackages, addServicePackage, updateServicePackage, deleteServicePackage, updateServicePackageStatus } from '@/api/service'
 
 // 搜索和筛选参数
@@ -421,24 +461,37 @@ const handleDelete = (id) => {
 <style scoped>
 .service-packages-container {
   width: 100%;
-  height: 100%;
+  min-height: 100vh;
+  padding: 24px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
 .page-header {
-  margin-bottom: 24px;
+  margin-bottom: 32px;
+  text-align: center;
+  padding: 32px 0;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
 }
 
 .page-title {
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 700;
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
+  margin: 0 0 12px 0;
+  color: #303133;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .page-subtitle {
   font-size: 16px;
-  color: var(--text-secondary);
+  color: #606266;
   margin: 0;
+  font-weight: 500;
 }
 
 .content-section {
@@ -448,10 +501,16 @@ const handleDelete = (id) => {
 }
 
 .card {
-  background: var(--gradient-card);
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow-sm);
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
   overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
 }
 
 .card-header {
@@ -459,15 +518,15 @@ const handleDelete = (id) => {
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
-  background-color: var(--bg-primary);
-  border-bottom: 1px solid var(--border-color);
+  background: linear-gradient(135deg, #f8f9ff 0%, #eef2ff 100%);
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .card-title {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 600;
   margin: 0;
-  color: var(--text-primary);
+  color: #303133;
 }
 
 .card-body {
@@ -479,54 +538,243 @@ const handleDelete = (id) => {
   gap: 16px;
   margin-bottom: 24px;
   flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: #f8f9ff;
+  border-radius: 12px;
+  border: 1px solid #e4e7ed;
 }
 
 .search-input {
   width: 300px;
+  border-radius: 8px;
+  border: 2px solid #e4e7ed;
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .filter-select {
   width: 200px;
+  border-radius: 8px;
+  border: 2px solid #e4e7ed;
+  transition: all 0.3s ease;
+}
+
+.filter-select:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .table-container {
   margin-bottom: 24px;
-  overflow-x: auto;
 }
 
-.price {
-  font-weight: 600;
-  color: var(--danger-color);
+/* 套餐卡片样式 */
+.packages-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 24px;
+  padding: 20px;
 }
 
-.description {
-  max-height: 60px;
-  overflow-y: auto;
-  text-overflow: ellipsis;
-}
-
-.features-list {
+/* 套餐卡片 */
+.package-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 20px;
+  transition: all 0.3s ease;
+  border: 1px solid #f0f0f0;
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-direction: column;
+  min-height: 320px;
 }
 
-.feature-tag {
-  margin: 2px 0;
+.package-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  border-color: #667eea;
+}
+
+/* 卡片头部 */
+.package-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.package-id-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.package-id {
+  font-size: 14px;
+  color: #909399;
+  font-weight: 500;
+}
+
+.level-tag {
+  font-weight: 600;
+  padding: 4px 16px;
+}
+
+.package-status {
+  display: flex;
+  align-items: center;
+}
+
+/* 卡片内容 */
+.package-card-content {
+  flex: 1;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 套餐名称和价格 */
+.package-name-section {
+  text-align: center;
+}
+
+.package-name {
+  font-size: 22px;
+  font-weight: 600;
+  color: #303133;
+  margin: 0 0 12px 0;
+}
+
+.package-price {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #f56c6c;
+  font-weight: 600;
+  font-size: 24px;
+}
+
+.package-price .el-icon {
+  font-size: 20px;
+}
+
+/* 描述部分 */
+.description-section {
+  background: #f8f9ff;
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 3px solid #667eea;
+}
+
+.description-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #667eea;
+  margin-bottom: 10px;
+}
+
+.description-text {
+  font-size: 14px;
+  color: #606266;
+  line-height: 1.5;
+  max-height: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+/* 服务内容部分 */
+.features-section {
+  background: #f0f9eb;
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 3px solid #67c23a;
+}
+
+.features-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #67c23a;
+  margin-bottom: 10px;
+}
+
+.features-content {
+  font-size: 14px;
+  line-height: 1.8;
+  color: #606266;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-weight: 500;
+  background: white;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #e4e7ed;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+}
+
+/* 卡片底部 */
+.package-card-footer {
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.edit-btn {
+  border-radius: 6px;
+  font-weight: 600;
+  padding: 4px 12px;
+  transition: all 0.3s ease;
+}
+
+.edit-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.delete-btn {
+  border-radius: 6px;
+  font-weight: 600;
+  padding: 4px 12px;
+  transition: all 0.3s ease;
+}
+
+.delete-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(255, 77, 79, 0.3);
 }
 
 .pagination {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   align-items: center;
-}
-
-.even-row {
-  background-color: var(--bg-primary);
-}
-
-.odd-row {
-  background-color: var(--bg-secondary);
+  padding: 20px;
+  background: #f8f9ff;
+  border-radius: 12px;
+  border: 1px solid #e4e7ed;
 }
 
 .form-row {
@@ -542,8 +790,77 @@ const handleDelete = (id) => {
 }
 
 .form-help {
-  color: var(--text-muted);
+  color: #909399;
   font-size: 12px;
   margin-top: 8px;
+}
+
+.price {
+  font-weight: 600;
+  color: #f56c6c;
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .service-packages-container {
+    padding: 16px;
+  }
+  
+  .packages-grid {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+    padding: 16px;
+  }
+  
+  .search-input {
+    width: 280px;
+  }
+  
+  .filter-select {
+    width: 180px;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    padding: 24px 16px;
+  }
+  
+  .page-title {
+    font-size: 24px;
+  }
+  
+  .card-body {
+    padding: 16px;
+  }
+  
+  .search-filter {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 16px;
+  }
+  
+  .search-input {
+    width: 100%;
+  }
+  
+  .filter-select {
+    width: 100%;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+  
+  .packages-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 12px;
+  }
+  
+  .package-card {
+    padding: 16px;
+  }
 }
 </style>

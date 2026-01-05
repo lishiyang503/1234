@@ -71,9 +71,9 @@
         </el-card>
       </div>
 
-      <!-- 床位表格 -->
-      <div class="table-section">
-        <el-card shadow="hover" class="table-card">
+      <!-- 床位卡片网格 -->
+      <div class="beds-section">
+        <el-card shadow="hover" class="beds-card">
           <template #header>
             <div class="table-header">
               <h2>床位列表</h2>
@@ -99,88 +99,83 @@
             </div>
           </template>
 
-          <el-table
-            :data="filteredBeds"
-            style="width: 100%"
-            stripe
-            class="bed-table"
-            empty-text="暂无床位数据"
-            :default-sort="{ prop: 'bedNumber', order: 'ascending' }"
-            @selection-change="handleSelectionChange"
-          >
-            <el-table-column type="selection" width="55" />
-            
-            <el-table-column prop="bedNumber" label="床位号" width="120" sortable>
-              <template #default="{ row }">
-                <div class="bed-number-cell">
-                  <div class="bed-number">{{ row.bedNumber }}</div>
+          <!-- 床位卡片网格 -->
+          <div class="beds-grid">
+            <div 
+              v-for="bed in filteredBeds" 
+              :key="bed.bedId"
+              class="bed-card"
+              :class="{'bed-card-occupied': bed.status === '已占用', 'bed-card-available': bed.status === '空闲'}"
+            >
+              <!-- 选择框 -->
+              <div class="bed-selection">
+                <el-checkbox 
+                  v-model="bed.checked" 
+                  @change="handleBedSelectionChange(bed)"
+                />
+              </div>
+              
+              <!-- 床位头部 -->
+              <div class="bed-header">
+                <div class="bed-number-section">
+                  <h3 class="bed-number">{{ bed.bedNumber }}</h3>
+                  <el-tag 
+                    :type="bed.status === '空闲' ? 'success' : 'info'" 
+                    size="large"
+                    class="status-tag"
+                  >
+                    {{ bed.status }}
+                  </el-tag>
                 </div>
-              </template>
-            </el-table-column>
-            
-            <el-table-column label="状态" width="100">
-              <template #default="{ row }">
-                <el-tag 
-                  :type="row.status === '空闲' ? 'success' : 'info'" 
-                  size="small"
-                >
-                  {{ row.status }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            
-            <el-table-column label="入住人姓名" width="150">
-              <template #default="{ row }">
-                <div class="resident-name-cell">
-                  <el-avatar v-if="row.residentName" :size="32" class="resident-avatar">
-                    {{ row.residentName.charAt(0) }}
-                  </el-avatar>
-                  <span v-if="row.residentName" class="resident-name">{{ row.residentName }}</span>
-                  <span v-else class="no-resident">暂无住户</span>
+              </div>
+              
+              <!-- 住户信息 -->
+              <div class="bed-content">
+                <div v-if="bed.status === '已占用'" class="resident-info">
+                  <div class="resident-avatar-section">
+                    <el-avatar :size="48" class="resident-avatar">
+                      {{ bed.residentName.charAt(0) }}
+                    </el-avatar>
+                    <div class="resident-name">{{ bed.residentName }}</div>
+                    <div class="resident-phone">{{ bed.residentPhone }}</div>
+                  </div>
+                  
+                  <div class="residence-info">
+                    <div class="info-item">
+                      <el-icon><Calendar /></el-icon>
+                      <span>入住时间: {{ formatDate(bed.checkInDate) }}</span>
+                    </div>
+                    <div class="info-item">
+                      <el-icon><Calendar /></el-icon>
+                      <span>离院时间: {{ bed.checkOutDate ? formatDate(bed.checkOutDate) : '未离院' }}</span>
+                    </div>
+                  </div>
                 </div>
-              </template>
-            </el-table-column>
-            
-            <el-table-column label="联系电话" width="150">
-              <template #default="{ row }">
-                <div class="phone-cell">
-                  <span v-if="row.residentPhone">{{ row.residentPhone }}</span>
-                  <span v-else class="no-data">-</span>
+                
+                <div v-else class="available-info">
+                  <el-empty 
+                    description="暂无住户"
+                    :image-size="80"
+                  />
                 </div>
-              </template>
-            </el-table-column>
-            
-            <el-table-column label="入住时间" width="200">
-              <template #default="{ row }">
-                <div class="date-cell">
-                  <span v-if="row.checkInDate">{{ formatDate(row.checkInDate) }}</span>
-                  <span v-else class="no-data">-</span>
+                
+                <!-- 备注 -->
+                <div v-if="bed.notes" class="notes-section">
+                  <div class="notes-title">
+                    <el-icon><Document /></el-icon>
+                    <span>备注</span>
+                  </div>
+                  <div class="notes-content">{{ bed.notes }}</div>
                 </div>
-              </template>
-            </el-table-column>
-            
-            <el-table-column label="离院时间" width="200">
-              <template #default="{ row }">
-                <div class="date-cell">
-                  <span v-if="row.checkOutDate">{{ formatDate(row.checkOutDate) }}</span>
-                  <span v-else class="no-data">-</span>
-                </div>
-              </template>
-            </el-table-column>
-            
-            <el-table-column prop="notes" label="备注" min-width="200">
-              <template #default="{ row }">
-                <div class="notes-cell">{{ row.notes || '无备注' }}</div>
-              </template>
-            </el-table-column>
-            
-            <el-table-column label="操作" width="200" fixed="right">
-              <template #default="{ row }">
+              </div>
+              
+              <!-- 操作按钮 -->
+              <div class="bed-footer">
                 <div class="action-buttons">
                   <el-button
                     size="small"
                     type="primary"
-                    @click="handleEditBed(row)"
+                    @click="handleEditBed(bed)"
                     class="edit-btn"
                   >
                     <el-icon><Edit /></el-icon>
@@ -188,10 +183,10 @@
                   </el-button>
                   
                   <el-button
-                    v-if="row.status === '已占用'"
+                    v-if="bed.status === '已占用'"
                     size="small"
                     type="success"
-                    @click="handleCheckOut(row)"
+                    @click="handleCheckOut(bed)"
                     class="checkout-btn"
                   >
                     <el-icon><Check /></el-icon>
@@ -200,7 +195,7 @@
                   
                   <el-popconfirm
                     title="确定要删除这个床位吗？"
-                    @confirm="handleDeleteBed(row.bedId)"
+                    @confirm="handleDeleteBed(bed.bedId)"
                     confirm-button-text="确定"
                     cancel-button-text="取消"
                   >
@@ -216,9 +211,22 @@
                     </template>
                   </el-popconfirm>
                 </div>
-              </template>
-            </el-table-column>
-          </el-table>
+              </div>
+            </div>
+          </div>
+
+          <!-- 空状态 -->
+          <div v-if="!filteredBeds.length && !loading" class="empty-state">
+            <el-empty
+              description="暂无床位数据"
+              :image-size="120"
+            >
+              <el-button type="primary" @click="handleAddBed" size="large">
+                <el-icon><Plus /></el-icon>
+                添加床位
+              </el-button>
+            </el-empty>
+          </div>
 
           <!-- 批量操作栏 -->
           <div v-if="selectedBeds.length > 0" class="batch-action-bar">
@@ -268,9 +276,10 @@
     <el-dialog
       v-model="dialogVisible"
       :title="isEdit ? '编辑床位信息' : '添加新床位'"
-      width="800px"
+      width="850px"
       center
       destroy-on-close
+      class="bed-dialog"
     >
       <el-form
         ref="bedFormRef"
@@ -278,52 +287,59 @@
         :rules="bedRules"
         label-width="150px"
         size="large"
+        class="bed-form"
       >
-        <el-row :gutter="20">
+        <el-row :gutter="25">
           <el-col :span="12">
-            <el-form-item label="床位号" prop="bedNumber">
+            <el-form-item label="床位号" prop="bedNumber" class="form-item">
               <el-input
                 v-model="bedForm.bedNumber"
                 placeholder="如：1、A、VIP-1等"
+                size="large"
+                class="form-input"
               />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="床位状态" prop="status">
-              <el-radio-group v-model="bedForm.status">
-                <el-radio label="空闲" value="空闲">空闲</el-radio>
-                <el-radio label="已占用" value="已占用">已占用</el-radio>
+            <el-form-item label="床位状态" prop="status" class="form-item">
+              <el-radio-group v-model="bedForm.status" class="status-radio-group">
+                <el-radio label="空闲" value="空闲" border size="large" class="status-radio">空闲</el-radio>
+                <el-radio label="已占用" value="已占用" border size="large" class="status-radio">已占用</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
         </el-row>
         
-        <el-divider>住户信息</el-divider>
+        <el-divider class="form-divider">住户信息</el-divider>
         
-        <el-row :gutter="20">
+        <el-row :gutter="25">
           <el-col :span="12">
-            <el-form-item label="住户姓名" prop="residentName">
+            <el-form-item label="住户姓名" prop="residentName" class="form-item">
               <el-input
                 v-model="bedForm.residentName"
                 placeholder="请输入住户姓名"
                 :disabled="bedForm.status === '空闲'"
+                size="large"
+                class="form-input"
               />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="联系电话" prop="residentPhone">
+            <el-form-item label="联系电话" prop="residentPhone" class="form-item">
               <el-input
                 v-model="bedForm.residentPhone"
                 placeholder="请输入联系电话"
                 :disabled="bedForm.status === '空闲'"
+                size="large"
+                class="form-input"
               />
             </el-form-item>
           </el-col>
         </el-row>
         
-        <el-row :gutter="20">
+        <el-row :gutter="25">
           <el-col :span="12">
-            <el-form-item label="入住时间" prop="checkInDate">
+            <el-form-item label="入住时间" prop="checkInDate" class="form-item">
               <el-date-picker
                 v-model="bedForm.checkInDate"
                 type="datetime"
@@ -332,11 +348,12 @@
                 value-format="YYYY-MM-DD HH:mm:ss"
                 :disabled="bedForm.status === '空闲'"
                 size="large"
+                class="form-input"
               />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="计划离院时间" prop="checkOutDate">
+            <el-form-item label="计划离院时间" prop="checkOutDate" class="form-item">
               <el-date-picker
                 v-model="bedForm.checkOutDate"
                 type="datetime"
@@ -345,24 +362,27 @@
                 value-format="YYYY-MM-DD HH:mm:ss"
                 :disabled="bedForm.status === '空闲'"
                 size="large"
+                class="form-input"
               />
             </el-form-item>
           </el-col>
         </el-row>
         
-        <el-form-item label="备注" prop="notes">
+        <el-form-item label="备注" prop="notes" class="form-item form-item-textarea">
           <el-input
             v-model="bedForm.notes"
             type="textarea"
-            :rows="4"
+            :rows="5"
             placeholder="请输入备注信息..."
+            resize="vertical"
+            class="form-textarea"
           />
         </el-form-item>
       </el-form>
       
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="dialogVisible = false" size="large">
+          <el-button @click="dialogVisible = false" size="large" class="footer-btn">
             取消
           </el-button>
           <el-button 
@@ -370,6 +390,7 @@
             @click="handleSubmit"
             size="large"
             :loading="submitting"
+            class="footer-btn primary-btn"
           >
             {{ isEdit ? '更新床位' : '添加床位' }}
           </el-button>
@@ -580,6 +601,20 @@ watch(() => bedForm.status, (newStatus) => {
     bedForm.checkOutDate = ''
   }
 })
+
+// 床位选择处理
+const handleBedSelectionChange = (bed) => {
+  if (bed.checked) {
+    // 添加到选中列表
+    selectedBeds.value.push(bed)
+  } else {
+    // 从选中列表移除
+    const index = selectedBeds.value.findIndex(item => item.bedId === bed.bedId)
+    if (index > -1) {
+      selectedBeds.value.splice(index, 1)
+    }
+  }
+}
 
 // 生命周期
 onMounted(() => {
@@ -1272,9 +1307,428 @@ const formatDateTimeForInput = (date) => {
   margin-top: 20px;
 }
 
+/* 添加床位对话框样式 */
+.bed-dialog {
+  padding: 0;
+}
+
+.bed-dialog .el-dialog__header {
+  padding: 24px 24px 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px 12px 0 0;
+}
+
+.bed-dialog .el-dialog__title {
+  color: white;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.bed-dialog .el-dialog__headerbtn .el-dialog__close {
+  color: white;
+  font-size: 20px;
+}
+
+.bed-dialog .el-dialog__body {
+  padding: 28px 24px;
+  background: #fafafa;
+}
+
+.bed-dialog .el-dialog__footer {
+  padding: 16px 24px 24px;
+  background: white;
+  border-radius: 0 0 12px 12px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.bed-form {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+}
+
+.form-item {
+  margin-bottom: 24px;
+  padding: 10px 0;
+}
+
+.form-input {
+  border-radius: 8px;
+  border: 2px solid #e4e7ed;
+  transition: all 0.3s ease;
+}
+
+.form-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.status-radio-group {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.status-radio {
+  border-radius: 8px;
+  padding: 8px 20px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.status-radio:focus {
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-divider {
+  margin: 24px 0;
+  border-color: #f0f0f0;
+}
+
+.form-item-textarea {
+  margin-bottom: 16px;
+}
+
+.form-textarea {
+  border-radius: 8px;
+  border: 2px solid #e4e7ed;
+  transition: all 0.3s ease;
+  resize: vertical;
+}
+
+.form-textarea:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-btn {
+  padding: 12px 32px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  min-width: 120px;
+}
+
+.primary-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.primary-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* 床位列表优化 */
+.table-card {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.table-card:hover {
+  box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.08);
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 16px 0;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #f8f9ff 0%, #eef2ff 100%);
+  border-radius: 8px;
+  padding: 16px 20px;
+}
+
+.table-header h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #303133;
+  margin: 0;
+}
+
+.table-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.table-actions .el-button {
+  border-radius: 8px;
+  font-weight: 500;
+  padding: 8px 20px;
+  transition: all 0.3s ease;
+}
+
+.table-actions .el-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* 床位表格样式优化 */
+.bed-table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.bed-table .el-table__header-wrapper th {
+  background: #f8f9ff;
+  font-weight: 600;
+  color: #303133;
+  padding: 16px 12px;
+  font-size: 14px;
+}
+
+.bed-table .el-table__body-wrapper tr {
+  transition: all 0.3s ease;
+}
+
+.bed-table .el-table__body-wrapper tr:hover {
+  background: #fafafa;
+  transform: translateX(2px);
+}
+
+.bed-table .el-table__body-wrapper td {
+  padding: 16px 12px;
+  font-size: 14px;
+  color: #606266;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.action-buttons .el-button {
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.action-buttons .el-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* 床位卡片样式 */
+.beds-section {
+  margin-bottom: 24px;
+}
+
+.beds-card {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.beds-card:hover {
+  box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.08);
+}
+
+/* 床位卡片网格 */
+.beds-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+  padding: 20px;
+}
+
+/* 床位卡片 */
+.bed-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 20px;
+  position: relative;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  display: flex;
+  flex-direction: column;
+  min-height: 280px;
+}
+
+.bed-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* 床位卡片状态样式 */
+.bed-card-available {
+  border-left: 4px solid #67c23a;
+}
+
+.bed-card-occupied {
+  border-left: 4px solid #409eff;
+}
+
+/* 选择框 */
+.bed-selection {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+}
+
+/* 床位头部 */
+.bed-header {
+  margin-bottom: 16px;
+}
+
+.bed-number-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bed-number {
+  font-size: 24px;
+  font-weight: 700;
+  color: #303133;
+  margin: 0;
+}
+
+.status-tag {
+  font-weight: 600;
+  padding: 4px 16px;
+}
+
+/* 床位内容 */
+.bed-content {
+  flex: 1;
+  margin-bottom: 20px;
+}
+
+/* 住户信息 */
+.resident-info {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.resident-avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.resident-avatar {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-weight: 600;
+  font-size: 20px;
+}
+
+.resident-name {
+  font-size: 20px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.resident-phone {
+  font-size: 14px;
+  color: #606266;
+}
+
+/* 居住信息 */
+.residence-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #f8f9ff;
+  padding: 16px;
+  border-radius: 8px;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #606266;
+  font-size: 14px;
+}
+
+.info-item .el-icon {
+  color: #667eea;
+  font-size: 16px;
+}
+
+/* 空闲信息 */
+.available-info {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 120px;
+}
+
+/* 备注信息 */
+.notes-section {
+  margin-top: 16px;
+  padding: 16px;
+  background: #f0f9eb;
+  border-radius: 8px;
+  border-left: 3px solid #67c23a;
+}
+
+.notes-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #67c23a;
+  margin-bottom: 8px;
+}
+
+.notes-content {
+  font-size: 14px;
+  color: #606266;
+  line-height: 1.5;
+  max-height: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+/* 床位底部操作按钮 */
+.bed-footer {
+  margin-top: auto;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
 /* 响应式设计 */
 @media (max-width: 1200px) {
   .bed-management-container {
+    padding: 16px;
+  }
+  
+  .beds-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
     padding: 16px;
   }
   
@@ -1346,6 +1800,26 @@ const formatDateTimeForInput = (date) => {
   .batch-action-bar {
     flex-direction: column;
     gap: 12px;
+  }
+  
+  .status-radio-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .status-radio {
+    width: 100%;
+    margin-bottom: 12px;
+  }
+  
+  .beds-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 12px;
+  }
+  
+  .bed-card {
+    padding: 16px;
   }
 }
 </style>

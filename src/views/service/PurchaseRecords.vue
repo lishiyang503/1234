@@ -106,6 +106,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { Search, User } from '@element-plus/icons-vue'
 import { getPurchaseRecords } from '@/api/service'
 
 // 搜索和筛选参数
