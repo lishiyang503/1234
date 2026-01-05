@@ -65,16 +65,30 @@
                   {{ formatDate(scope.row.updateTime) }}
                 </template>
               </el-table-column>
-              <el-table-column label="操作" width="180" align="center">
+              <el-table-column label="操作" width="120" align="center">
                 <template #default="scope">
-                  <el-button type="primary" size="small" @click="showEditDialog(scope.row)">
-                    <el-icon><Edit /></el-icon>
-                    编辑
-                  </el-button>
-                  <el-button type="danger" size="small" @click="handleDelete(scope.row.id)" :disabled="scope.row.id <= 3">
-                    <el-icon><Delete /></el-icon>
-                    删除
-                  </el-button>
+                  <el-dropdown>
+                    <el-button type="primary" size="small">
+                      操作
+                      <el-icon class="el-icon--right"><arrow-down /></el-icon>
+                    </el-button>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item @click="showEditDialog(scope.row)">
+                          <el-icon><Edit /></el-icon>
+                          编辑
+                        </el-dropdown-item>
+                        <el-dropdown-item 
+                          @click="handleDelete(scope.row.id)" 
+                          type="danger"
+                          :disabled="scope.row.id <= 3"
+                        >
+                          <el-icon><Delete /></el-icon>
+                          删除
+                        </el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
                 </template>
               </el-table-column>
             </el-table>
