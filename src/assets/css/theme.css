@@ -37,14 +37,165 @@
   --gradient-card: linear-gradient(135deg, #ffffff 0%, #f8f5ff 100%);
 }
 
-/* Element Plus 组件自定义样式 */
+/* Element Plus 组件自定义样式 - 按钮 */
+.el-button {
+  font-weight: 500;
+  border-radius: 8px !important;
+  transition: all 0.2s ease-in-out !important;
+  box-shadow: 0 2px 8px rgba(138, 79, 255, 0.12) !important;
+  border: 1px solid transparent !important;
+  padding: 8px 20px !important;
+  font-size: 14px !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  background: transparent !important;
+}
+
+/* 主要按钮样式 */
 .el-button--primary {
-  background: var(--gradient-primary) !important;
+  background: var(--primary-color) !important;
   border: none !important;
+  color: white !important;
 }
 
 .el-button--primary:hover {
-  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-light) 100%) !important;
+  background: var(--primary-dark) !important;
+  box-shadow: 0 4px 16px rgba(138, 79, 255, 0.25) !important;
+  transform: translateY(-1px) !important;
+}
+
+.el-button--primary:active {
+  transform: translateY(0) !important;
+  box-shadow: 0 2px 8px rgba(138, 79, 255, 0.15) !important;
+}
+
+/* 次要按钮样式 */
+.el-button--default {
+  background: white !important;
+  border-color: #e4e7ed !important;
+  color: #606266 !important;
+}
+
+.el-button--default:hover {
+  background: #fafafa !important;
+  border-color: var(--primary-color) !important;
+  color: var(--primary-color) !important;
+  box-shadow: 0 4px 12px rgba(138, 79, 255, 0.15) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* 成功按钮样式 */
+.el-button--success {
+  background: var(--success-color) !important;
+  border: none !important;
+  color: white !important;
+}
+
+.el-button--success:hover {
+  background: #6db845 !important;
+  box-shadow: 0 4px 12px rgba(123, 201, 80, 0.25) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* 警告按钮样式 */
+.el-button--warning {
+  background: var(--warning-color) !important;
+  border: none !important;
+  color: white !important;
+}
+
+.el-button--warning:hover {
+  background: #f0a73a !important;
+  box-shadow: 0 4px 12px rgba(255, 183, 77, 0.25) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* 危险按钮样式 */
+.el-button--danger {
+  background: var(--danger-color) !important;
+  border: none !important;
+  color: white !important;
+}
+
+.el-button--danger:hover {
+  background: #f05a5a !important;
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.25) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* 信息按钮样式 */
+.el-button--info {
+  background: var(--info-color) !important;
+  border: none !important;
+  color: white !important;
+}
+
+.el-button--info:hover {
+  background: #3dbdcd !important;
+  box-shadow: 0 4px 12px rgba(77, 208, 225, 0.25) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* 文字按钮样式 */
+.el-button--text {
+  color: var(--primary-color) !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.el-button--text:hover {
+  background: #f0ebff !important;
+  color: var(--primary-dark) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* 按钮尺寸 */
+.el-button--small {
+  padding: 6px 16px !important;
+  font-size: 13px !important;
+  border-radius: 6px !important;
+}
+
+.el-button--large {
+  padding: 10px 24px !important;
+  font-size: 16px !important;
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+}
+
+/* 禁用状态 */
+.el-button.is-disabled,
+.el-button.is-disabled:hover,
+.el-button.is-disabled:active {
+  background: #f5f7fa !important;
+  border-color: #dcdfe6 !important;
+  color: #c0c4cc !important;
+  box-shadow: none !important;
+  transform: none !important;
+  opacity: 0.8 !important;
+}
+
+/* 按钮组样式 */
+.el-button-group .el-button {
+  border-radius: 0 !important;
+  margin: 0 !important;
+}
+
+.el-button-group .el-button:first-child {
+  border-top-left-radius: 8px !important;
+  border-bottom-left-radius: 8px !important;
+}
+
+.el-button-group .el-button:last-child {
+  border-top-right-radius: 8px !important;
+  border-bottom-right-radius: 8px !important;
+}
+
+.el-button-group .el-button:not(:first-child):not(:last-child) {
+  border-left: 1px solid #e4e7ed !important;
+  border-right: 1px solid #e4e7ed !important;
 }
 
 .el-tag--success {
