@@ -1,0 +1,101 @@
+/* 浅紫色主题变量 */
+:root {
+  /* 主色调 - 浅紫色系 */
+  --primary-color: #8a4fff;
+  --primary-light: #a87bff;
+  --primary-lighter: #e6d7ff;
+  --primary-dark: #6c35e6;
+  
+  /* 辅助色调 */
+  --secondary-color: #ff6b9d;
+  --success-color: #7bc950;
+  --warning-color: #ffb74d;
+  --danger-color: #ff6b6b;
+  --info-color: #4dd0e1;
+  
+  /* 背景色 */
+  --bg-primary: #f8f5ff;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-hover: #f0ebff;
+  
+  /* 文字颜色 */
+  --text-primary: #2d1b69;
+  --text-secondary: #6c63a8;
+  --text-muted: #a099d0;
+  
+  /* 边框和阴影 */
+  --border-color: #e6d7ff;
+  --border-radius: 16px;
+  --border-radius-sm: 12px;
+  --shadow-sm: 0 4px 12px rgba(138, 79, 255, 0.1);
+  --shadow-md: 0 8px 24px rgba(138, 79, 255, 0.15);
+  --shadow-lg: 0 16px 48px rgba(138, 79, 255, 0.2);
+  
+  /* 渐变 */
+  --gradient-primary: linear-gradient(135deg, #8a4fff 0%, #a87bff 100%);
+  --gradient-card: linear-gradient(135deg, #ffffff 0%, #f8f5ff 100%);
+}
+
+/* Element Plus 组件自定义样式 */
+.el-button--primary {
+  background: var(--gradient-primary) !important;
+  border: none !important;
+}
+
+.el-button--primary:hover {
+  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-light) 100%) !important;
+}
+
+.el-tag--success {
+  background-color: rgba(123, 201, 80, 0.1) !important;
+  border-color: rgba(123, 201, 80, 0.2) !important;
+  color: var(--success-color) !important;
+}
+
+.el-tag--warning {
+  background-color: rgba(255, 183, 77, 0.1) !important;
+  border-color: rgba(255, 183, 77, 0.2) !important;
+  color: var(--warning-color) !important;
+}
+
+.el-tag--info {
+  background-color: rgba(77, 208, 225, 0.1) !important;
+  border-color: rgba(77, 208, 225, 0.2) !important;
+  color: var(--info-color) !important;
+}
+
+.el-tag--danger {
+  background-color: rgba(255, 107, 107, 0.1) !important;
+  border-color: rgba(255, 107, 107, 0.2) !important;
+  color: var(--danger-color) !important;
+}
+
+/* 全局滚动条样式 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary-light);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-color);
+}
+
+/* 全局字体 */
+body {
+  font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  margin: 0;
+  padding: 0;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
