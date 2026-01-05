@@ -65,9 +65,9 @@
             </div>
           </div>
           
-          <!-- 入住退管管理 -->
+          <!-- 档案管理 -->
           <div class="menu-section">
-            <h3 class="menu-section-title">入住退管管理</h3>
+            <h3 class="menu-section-title">档案管理</h3>
             <div 
               class="menu-item" 
               :class="{ active: $route.path.includes('/residents') }"
