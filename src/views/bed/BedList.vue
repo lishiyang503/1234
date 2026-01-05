@@ -613,12 +613,21 @@ const fetchRoomInfo = async () => {
   const fetchBeds = async () => {
     loading.value = true
     try {
-      const response = await bedApi.getAllBeds()
-      if (response.data && Array.isArray(response.data)) {
+      const response = await bedApi.getBedsByRoomId(roomId)
+      if (response.data) {
         // 适配后端返回的床位数据格式
-        bedList.value = response.data.map(bed => ({
+        // 检查是否有success字段（异常情况）
+        if (response.data.success === false) {
+          ElMessage.error('获取床位列表失败: ' + response.data.message)
+          bedList.value = []
+          return
+        }
+        
+        // 正常情况：直接返回data数组
+        const bedData = Array.isArray(response.data.data) ? response.data.data : response.data
+        bedList.value = bedData.map(bed => ({
           bedId: bed.id,
-          roomId: bed.roomId,
+          roomId: bed.roomId || Number(roomId),
           bedNumber: bed.bedNumber,
           status: bed.status === 0 ? '空闲' : '已占用',
           residentName: bed.residentName || '',
@@ -626,14 +635,16 @@ const fetchRoomInfo = async () => {
           checkInDate: bed.checkInDate || '',
           checkOutDate: bed.checkOutDate || '',
           notes: bed.notes || ''
-        })).filter(bed => bed.roomId === Number(roomId))
+        }))
         console.log('获取到的床位数据:', bedList.value)
       } else {
-        ElMessage.error('获取床位列表失败')
+        ElMessage.error('获取床位列表失败: 无效的响应格式')
+        bedList.value = []
       }
     } catch (error) {
       console.error('获取床位列表失败:', error)
-      ElMessage.error('获取床位列表失败')
+      ElMessage.error('获取床位列表失败: ' + error.message)
+      bedList.value = []
     } finally {
       loading.value = false
     }
