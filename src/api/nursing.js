@@ -1,7 +1,6 @@
 import request from '@/utils/request'
 
 // 护理级别管理相关API
-
 // 获取护理级别列表
 export const getNursingLevels = (params) => {
   return request({

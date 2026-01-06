@@ -32,66 +32,120 @@
             </el-button>
           </div>
           
-          <!-- 护理级别列表 -->
-          <div class="table-container">
-            <el-table
-              :data="nursingLevelsList"
-              border
-              stripe
-              style="width: 100%"
-              v-loading="loading"
-              element-loading-text="加载中..."
-              element-loading-background="rgba(255, 255, 255, 0.8)"
-              empty-text="暂无护理级别数据"
+          <!-- 护理级别卡片列表 -->
+          <div class="cards-container" v-loading="loading" element-loading-text="加载中..." element-loading-background="rgba(255, 255, 255, 0.8)">
+            <div v-if="nursingLevelsList.length === 0" class="empty-state">
+              <el-empty description="暂无护理级别数据" />
+            </div>
+            <el-card
+              v-for="item in nursingLevelsList"
+              :key="item.id"
+              class="level-card"
+              shadow="hover"
+              :body-style="{ padding: '0' }"
             >
-              <el-table-column prop="id" label="ID" width="80" align="center" />
-              <el-table-column prop="name" label="级别名称" width="150" sortable />
-              <el-table-column prop="level" label="级别" width="120" align="center">
-                <template #default="scope">
-                  <el-tag :type="getLevelTagType(scope.row.level)">
-                    {{ getLevelText(scope.row.level) }}
-                  </el-tag>
-                </template>
-              </el-table-column>
-              <el-table-column prop="description" label="级别描述" min-width="200" />
-              <el-table-column prop="baseCost" label="基础费用(元/月)" width="150" align="center" sortable />
-              <el-table-column prop="createTime" label="创建时间" width="180" align="center" sortable>
-                <template #default="scope">
-                  {{ formatDate(scope.row.createTime) }}
-                </template>
-              </el-table-column>
-              <el-table-column prop="updateTime" label="更新时间" width="180" align="center" sortable>
-                <template #default="scope">
-                  {{ formatDate(scope.row.updateTime) }}
-                </template>
-              </el-table-column>
-              <el-table-column label="操作" width="120" align="center">
-                <template #default="scope">
+              <!-- 卡片头部 - 带渐变背景 -->
+              <div class="card-header-gradient" :class="`level-bg-${item.level}`">
+                <div class="card-header-content">
+                  <!-- 护士头像 -->
+                  <div class="nurse-avatar-wrapper">
+                    <div class="nurse-avatar">
+                      <el-icon class="nurse-icon"><UserFilled /></el-icon>
+                    </div>
+                  </div>
+                  
+                  <div class="level-info">
+                    <h4 class="level-name">{{ item.name }}</h4>
+                    <el-tag :type="getLevelTagType(item.level)" class="level-tag">
+                      {{ getLevelText(item.level) }}
+                    </el-tag>
+                  </div>
+                  
                   <el-dropdown>
-                    <el-button type="primary" size="small">
-                      操作
-                      <el-icon class="el-icon--right"><arrow-down /></el-icon>
+                    <el-button type="primary" size="small" circle class="action-btn">
+                      <el-icon><Setting /></el-icon>
                     </el-button>
                     <template #dropdown>
                       <el-dropdown-menu>
-                        <el-dropdown-item @click="showEditDialog(scope.row)">
-                          <el-icon><Edit /></el-icon>
+                        <el-dropdown-item @click="showEditDialog(item)" class="dropdown-item">
+                          <el-icon class="dropdown-icon"><Edit /></el-icon>
                           编辑
                         </el-dropdown-item>
                         <el-dropdown-item 
-                          @click="handleDelete(scope.row.id)" 
-                          type="danger"
-                          :disabled="scope.row.id <= 3"
+                          @click="handleDelete(item.id)" 
+                          class="dropdown-item dropdown-item-danger"
+                          :disabled="item.id <= 3"
                         >
-                          <el-icon><Delete /></el-icon>
+                          <el-icon class="dropdown-icon"><Delete /></el-icon>
                           删除
                         </el-dropdown-item>
                       </el-dropdown-menu>
                     </template>
                   </el-dropdown>
-                </template>
-              </el-table-column>
-            </el-table>
+                </div>
+              </div>
+              
+              <!-- 卡片主体内容 -->
+              <div class="card-body-content">
+                <!-- 描述部分 -->
+                <div class="description-section">
+                  <div class="section-header">
+                    <el-icon class="section-icon"><Document /></el-icon>
+                    <h5 class="section-title">级别描述</h5>
+                  </div>
+                  <p class="description-text">{{ item.description }}</p>
+                </div>
+                
+                <!-- 费用卡片 -->
+                <div class="cost-card">
+                  <div class="cost-icon-wrapper">
+                    <el-icon class="cost-icon"><Money /></el-icon>
+                  </div>
+                  <div class="cost-info">
+                    <span class="cost-label">基础费用</span>
+                    <span class="cost-value">¥{{ item.baseCost }}<span class="cost-unit">/月</span></span>
+                  </div>
+                </div>
+                
+                <!-- 时间信息 -->
+                <div class="time-section">
+                  <div class="time-item">
+                    <div class="time-icon-wrapper">
+                      <el-icon class="time-icon"><Calendar /></el-icon>
+                    </div>
+                    <div class="time-info">
+                      <span class="time-label">创建时间</span>
+                      <span class="time-value">{{ formatDate(item.createTime) }}</span>
+                    </div>
+                  </div>
+                  <div class="time-item">
+                    <div class="time-icon-wrapper">
+                      <el-icon class="time-icon"><EditPen /></el-icon>
+                    </div>
+                    <div class="time-info">
+                      <span class="time-label">更新时间</span>
+                      <span class="time-value">{{ formatDate(item.updateTime) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 卡片底部 -->
+              <div class="card-footer">
+                <div class="footer-content">
+                  <div class="id-info">
+                    <span class="id-label">ID:</span>
+                    <span class="id-value">{{ item.id }}</span>
+                  </div>
+                  <el-progress
+                    :percentage="getProgressValue(item.level)"
+                    :color="getLevelColor(item.level)"
+                    :show-text="false"
+                    class="level-progress"
+                  />
+                </div>
+              </div>
+            </el-card>
           </div>
           
           <!-- 分页 -->
@@ -131,6 +185,8 @@
             <el-option label="基础" value="1" />
             <el-option label="中级" value="2" />
             <el-option label="高级" value="3" />
+            <el-option label="VIP" value="4" />
+            <el-option label="SVIP" value="5" />
           </el-select>
         </el-form-item>
         
@@ -168,6 +224,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getNursingLevels, addNursingLevel, updateNursingLevel, deleteNursingLevel } from '@/api/nursing'
+import { Setting, Edit, Delete, Calendar, EditPen, Document, Money, UserFilled, Plus } from '@element-plus/icons-vue'
 
 // 搜索和筛选参数
 const searchParams = reactive({
@@ -351,7 +408,9 @@ const getLevelTagType = (level) => {
   const map = {
     1: 'success', // 基础
     2: 'warning', // 中级
-    3: 'danger'   // 高级
+    3: 'danger',  // 高级
+    4: 'primary', // VIP
+    5: 'info'     // SVIP
   }
   return map[level] || 'info'
 }
@@ -361,9 +420,35 @@ const getLevelText = (level) => {
   const map = {
     1: '基础',
     2: '中级',
-    3: '高级'
+    3: '高级',
+    4: 'VIP',
+    5: 'SVIP'
   }
   return map[level] || level
+}
+
+// 获取级别进度值
+const getProgressValue = (level) => {
+  const map = {
+    1: 33,
+    2: 66,
+    3: 100,
+    4: 133,
+    5: 166
+  }
+  return map[level] || 0
+}
+
+// 获取级别颜色
+const getLevelColor = (level) => {
+  const map = {
+    1: '#67C23A', // success - 基础
+    2: '#E6A23C', // warning - 中级
+    3: '#F56C6C', // danger - 高级
+    4: '#409EFF', // primary - VIP
+    5: '#909399'  // info - SVIP
+  }
+  return map[level] || '#909399' // info
 }
 
 // 格式化日期
@@ -469,14 +554,401 @@ const formatDate = (dateString) => {
   transition: all 0.3s ease;
 }
 
-.table-container {
+.cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 28px;
   margin-bottom: 24px;
-  overflow-x: auto;
-  background: white;
-  border-radius: 4px;
   transition: all 0.3s ease;
 }
 
+.empty-state {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 80px 20px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 2px dashed #e0e0e0;
+}
+
+/* 卡片基础样式 */
+.level-card {
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  background: white;
+  border: 1px solid #f0f0f0;
+}
+
+.level-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
+}
+
+/* 卡片头部渐变背景 */
+.card-header-gradient {
+  padding: 28px 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.card-header-gradient::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0.1;
+  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="2" fill="white" opacity="0.3"/></svg>');
+  background-size: 20px 20px;
+}
+
+/* 不同级别背景色 */
+.level-bg-1 {
+  background: linear-gradient(135deg, #67C23A 0%, #85ce61 100%);
+}
+
+.level-bg-2 {
+  background: linear-gradient(135deg, #E6A23C 0%, #ebb563 100%);
+}
+
+.level-bg-3 {
+  background: linear-gradient(135deg, #F56C6C 0%, #f78989 100%);
+}
+
+.level-bg-4 {
+  background: linear-gradient(135deg, #409EFF 0%, #66b1ff 100%);
+}
+
+.level-bg-5 {
+  background: linear-gradient(135deg, #909399 0%, #a6a9ad 100%);
+}
+
+/* 卡片头部内容 */
+.card-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+  gap: 16px;
+}
+
+/* 护士头像 */
+.nurse-avatar-wrapper {
+  position: relative;
+}
+
+.nurse-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.nurse-avatar:hover {
+  transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.nurse-icon {
+  font-size: 24px;
+  color: white;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+}
+
+.level-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.level-name {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  letter-spacing: 0.5px;
+}
+
+.level-tag {
+  font-size: 13px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* 操作按钮 */
+.action-btn {
+  background: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.action-btn:hover {
+  background: rgba(255, 255, 255, 0.4);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* 下拉菜单样式 */
+.el-dropdown-menu {
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  border: 1px solid #f0f0f0;
+  overflow: hidden;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.dropdown-item:hover {
+  background: #f8f9fa;
+  color: #409eff;
+}
+
+.dropdown-item-danger {
+  color: #f56c6c;
+}
+
+.dropdown-item-danger:hover {
+  background: #fff1f0;
+  color: #f56c6c;
+}
+
+.dropdown-icon {
+  font-size: 14px;
+}
+
+/* 卡片主体内容 */
+.card-body-content {
+  padding: 24px;
+}
+
+/* 描述部分 */
+.description-section {
+  margin-bottom: 24px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.section-icon {
+  font-size: 16px;
+  color: #409eff;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #606266;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.description-text {
+  font-size: 14px;
+  color: #303133;
+  line-height: 1.7;
+  margin: 0;
+  word-break: break-word;
+  background: #fafafa;
+  padding: 16px;
+  border-radius: 12px;
+  border-left: 4px solid #409eff;
+}
+
+/* 费用卡片 */
+.cost-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-radius: 12px;
+  margin-bottom: 24px;
+  transition: all 0.3s ease;
+  border: 1px solid #bae6fd;
+}
+
+.cost-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.15);
+}
+
+.cost-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.cost-icon {
+  font-size: 24px;
+  color: #3b82f6;
+}
+
+.cost-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cost-label {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.cost-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1e40af;
+  line-height: 1;
+}
+
+.cost-unit {
+  font-size: 14px;
+  font-weight: normal;
+  color: #64748b;
+  margin-left: 6px;
+}
+
+/* 时间信息 */
+.time-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.time-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 14px;
+  color: #606266;
+}
+
+.time-icon-wrapper {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.time-icon {
+  font-size: 16px;
+  color: #64748b;
+}
+
+.time-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.time-label {
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.time-value {
+  color: #334155;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  background: #f8fafc;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+/* 卡片底部 */
+.card-footer {
+  padding: 0 24px 24px;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.id-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #94a3b8;
+  font-family: 'Courier New', monospace;
+}
+
+.id-label {
+  font-weight: 600;
+}
+
+.id-value {
+  background: #f1f5f9;
+  padding: 4px 10px;
+  border-radius: 12px;
+  color: #64748b;
+}
+
+/* 进度条 */
+.level-progress {
+  height: 8px;
+  border-radius: 4px;
+  flex: 1;
+  background: #f1f5f9;
+}
+
+/* 分页样式 */
 .pagination {
   display: flex;
   justify-content: flex-end;
@@ -485,6 +957,13 @@ const formatDate = (dateString) => {
 }
 
 /* 响应式设计 */
+@media (max-width: 1200px) {
+  .cards-container {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 24px;
+  }
+}
+
 @media (max-width: 768px) {
   .nursing-levels-container {
     padding: 10px;
@@ -494,24 +973,31 @@ const formatDate = (dateString) => {
     font-size: 24px;
   }
   
-  .card-body {
-    padding: 16px;
+  .card-body-content {
+    padding: 20px;
   }
   
-  .card-header {
-    padding: 16px;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
+  .cards-container {
+    grid-template-columns: 1fr;
+    gap: 20px;
   }
   
-  .search-input {
-    width: 100%;
+  .level-name {
+    font-size: 20px;
   }
   
-  .search-filter {
+  .cost-value {
+    font-size: 24px;
+  }
+  
+  .card-header-gradient {
+    padding: 24px 20px;
+  }
+  
+  .footer-content {
     flex-direction: column;
     align-items: stretch;
+    gap: 12px;
   }
 }
 
@@ -520,12 +1006,41 @@ const formatDate = (dateString) => {
     font-size: 20px;
   }
   
-  .card-header {
-    padding: 12px;
+  .card-body-content {
+    padding: 16px;
   }
   
-  .card-body {
-    padding: 12px;
+  .level-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
   }
+  
+  .card-header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .cost-card {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+  }
+  
+  .cards-container {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+/* 平滑滚动 */
+html {
+  scroll-behavior: smooth;
+}
+
+/* 全局过渡效果 */
+* {
+  transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
 }
 </style>
