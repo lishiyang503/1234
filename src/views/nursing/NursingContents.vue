@@ -164,6 +164,8 @@
             <el-option label="基础护理" value="1" />
             <el-option label="中级护理" value="2" />
             <el-option label="高级护理" value="3" />
+            <el-option label="VIP" value="4" />
+            <el-option label="SVIP" value="5" />
           </el-select>
         </el-form-item>
         
@@ -374,7 +376,9 @@ const getLevelTagType = (level) => {
   const map = {
     1: 'success', // 基础护理
     2: 'warning', // 中级护理
-    3: 'danger'   // 高级护理
+    3: 'danger',  // 高级护理
+    4: 'primary', // VIP
+    5: 'info'     // SVIP
   }
   return map[level] || 'info'
 }
@@ -384,7 +388,9 @@ const getLevelText = (level) => {
   const map = {
     1: '基础护理',
     2: '中级护理',
-    3: '高级护理'
+    3: '高级护理',
+    4: 'VIP',
+    5: 'SVIP'
   }
   return map[level] || level
 }
