@@ -191,9 +191,9 @@
               >
                 <el-option
                   v-for="resident in residentList"
-                  :key="resident.id"
+                  :key="resident.actualId || resident.id"
                   :label="resident.name"
-                  :value="resident.id"
+                  :value="resident.actualId || resident.id"
                 >
                   <span>{{ resident.name }}</span>
                   <span style="float: right; color: #8492a6; font-size: 12px">
@@ -324,6 +324,7 @@ const dietFormRef = ref()
 // 表单数据
 const dietForm = reactive({
   id: null,
+  residentId: null,
   residentName: '',
   roomNumber: '',
   bedNumber: '',
@@ -379,7 +380,7 @@ const fetchResidentList = async () => {
     // 1. 状态为'入住'的老人
     // 2. 未添加膳食需求的老人
     residentList.value = allResidents.filter(resident => 
-      resident.status === '入住' && !existingResidentIds.includes(resident.id)
+      resident.status === '入住' && !existingResidentIds.includes(resident.actualId || resident.id)
     )
   } catch (error) {
     console.error('获取老人列表失败:', error)
@@ -394,7 +395,7 @@ const handleResidentChange = (residentId) => {
     dietForm.residentName = ''
     return
   }
-  const selectedResident = residentList.value.find(r => r.id === residentId)
+  const selectedResident = residentList.value.find(r => (r.actualId || r.id) === residentId)
   if (selectedResident) {
     dietForm.residentName = selectedResident.name
     dietForm.roomNumber = selectedResident.roomNumber
@@ -524,6 +525,7 @@ const showEditDialog = (row) => {
 const resetForm = () => {
   Object.assign(dietForm, {
     id: null,
+    residentId: null,
     residentName: '',
     roomNumber: '',
     bedNumber: '',
@@ -559,17 +561,16 @@ const handleSubmit = async () => {
     
     // 简化响应处理，适配不同的返回格式
     if (response.data) {
-      if (response.data.success || response.data) {
+      if (response.data.success) {
         ElMessage.success(successMessage)
         dialogVisible.value = false
         fetchDietList()
+        fetchResidentList()
       } else {
         ElMessage.error(response.data.message || errorMessage)
       }
     } else {
-      ElMessage.success(successMessage)
-      dialogVisible.value = false
-      fetchDietList()
+      ElMessage.error(errorMessage)
     }
   } catch (error) {
     console.error('提交失败:', error)

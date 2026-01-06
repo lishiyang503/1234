@@ -202,14 +202,14 @@
         
         <el-tab-pane label="健康信息" name="health">
           <el-form
-            :model="residentForm"
+            :model="residentForm.healthRecord"
             label-width="120px"
             class="health-form"
           >
             <div class="form-row">
               <el-form-item label="身高(cm)" class="form-item">
                 <el-input 
-                  v-model="residentForm.height" 
+                  v-model="residentForm.healthRecord.height" 
                   type="number" 
                   placeholder="请输入身高，如：170.5" 
                   min="50" 
@@ -220,7 +220,7 @@
               </el-form-item>
               <el-form-item label="体重(kg)" class="form-item">
                 <el-input 
-                  v-model="residentForm.weight" 
+                  v-model="residentForm.healthRecord.weight" 
                   type="number" 
                   placeholder="请输入体重，如：65.5" 
                   min="20" 
@@ -231,7 +231,7 @@
               </el-form-item>
               <el-form-item label="血型" class="form-item">
                 <el-select 
-                  v-model="residentForm.bloodType" 
+                  v-model="residentForm.healthRecord.bloodType" 
                   placeholder="请选择血型"
                   clearable
                 >
@@ -245,7 +245,7 @@
             </div>
             <el-form-item label="既往病史" class="form-item">
               <el-input
-                v-model="residentForm.medicalHistory"
+                v-model="residentForm.healthRecord.medicalHistory"
                 type="textarea"
                 :rows="4"
                 placeholder="请详细描述老人的既往病史，如：高血压、糖尿病等"
@@ -255,7 +255,7 @@
             </el-form-item>
             <el-form-item label="过敏史" class="form-item">
               <el-input
-                v-model="residentForm.allergyHistory"
+                v-model="residentForm.healthRecord.allergyHistory"
                 type="textarea"
                 :rows="4"
                 placeholder="请详细描述老人的过敏史，如：青霉素过敏、海鲜过敏等"
@@ -265,7 +265,7 @@
             </el-form-item>
             <el-form-item label="健康状况" class="form-item">
               <el-input
-                v-model="residentForm.healthStatus"
+                v-model="residentForm.healthRecord.healthNotes"
                 type="textarea"
                 :rows="4"
                 placeholder="请详细描述老人的当前健康状况"
@@ -380,13 +380,15 @@ const residentForm = reactive({
   entryDate: '',
   roomNumber: '',
   bedNumber: '',
-  height: '',
-  weight: '',
-  bloodType: '',
-  medicalHistory: '',
-  allergyHistory: '',
-  healthStatus: '',
-  status: '入住'
+  status: '入住',
+  healthRecord: {
+    height: '',
+    weight: '',
+    bloodType: '',
+    medicalHistory: '',
+    allergyHistory: '',
+    healthNotes: ''
+  }
 })
 
 // 表单验证规则
@@ -591,7 +593,27 @@ const showAddDialog = () => {
 const showEditDialog = (row) => {
   isEditMode.value = true
   dialogTitle.value = '编辑入住登记'
-  Object.assign(residentForm, row)
+  // 重置表单，确保healthRecord对象存在
+  resetForm()
+  // 填充基础信息
+  Object.assign(residentForm, {
+    id: row.actualId || row.id,
+    name: row.name,
+    idCard: row.idCard,
+    gender: row.gender,
+    age: row.age,
+    phone: row.phone,
+    emergencyContact: row.emergencyContact,
+    emergencyPhone: row.emergencyPhone,
+    entryDate: row.entryDate,
+    roomNumber: row.roomNumber,
+    bedNumber: row.bedNumber,
+    status: row.status
+  })
+  // 填充健康信息
+  if (row.healthRecord) {
+    Object.assign(residentForm.healthRecord, row.healthRecord)
+  }
   dialogVisible.value = true
 }
 
@@ -609,13 +631,15 @@ const resetForm = () => {
     entryDate: '',
     roomNumber: '',
     bedNumber: '',
-    height: '',
-    weight: '',
-    bloodType: '',
-    medicalHistory: '',
-    allergyHistory: '',
-    healthStatus: '',
-    status: '入住'
+    status: '入住',
+    healthRecord: {
+      height: '',
+      weight: '',
+      bloodType: '',
+      medicalHistory: '',
+      allergyHistory: '',
+      healthNotes: ''
+    }
   })
   activeTab.value = 'basic'
   if (residentFormRef.value) {

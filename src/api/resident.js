@@ -62,7 +62,7 @@ export const getHealthRecords = (params) => {
 // 添加健康档案
 export const addHealthRecord = (data) => {
   return request({
-    url: '/health',
+    url: '/health/add',
     method: 'post',
     data
   })
@@ -71,7 +71,7 @@ export const addHealthRecord = (data) => {
 // 更新健康档案
 export const updateHealthRecord = (data) => {
   return request({
-    url: '/health',
+    url: '/health/update',
     method: 'put',
     data
   })
@@ -80,7 +80,7 @@ export const updateHealthRecord = (data) => {
 // 获取健康档案详情
 export const getHealthRecordDetail = (id) => {
   return request({
-    url: `/health/${id}`,
+    url: `/health/detail/${id}`,
     method: 'get'
   })
 }
