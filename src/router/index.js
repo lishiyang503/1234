@@ -48,9 +48,18 @@ const routes = [
         component: () => import('@/views/resident/HealthRecords.vue')
       },
       {
-        path: '/health-monitoring',
-        name: 'HealthMonitoring',
+        path: '/health-monitoring/daily',
+        name: 'HealthMonitoringDaily',
         component: () => import('@/views/resident/HealthMonitoring.vue')
+      },
+      {
+        path: '/health-monitoring/visualization',
+        name: 'HealthMonitoringVisualization',
+        component: () => import('@/views/resident/HealthMonitoringVisualization.vue')
+      },
+      {
+        path: '/health-monitoring',
+        redirect: '/health-monitoring/daily'
       },
       {
         path: '/history',

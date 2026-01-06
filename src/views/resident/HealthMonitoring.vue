@@ -19,10 +19,13 @@
               <div class="tab-content">
                 <el-form :model="bloodPressureForm" label-width="120px" class="health-form">
                   <el-form-item label="老人姓名" required>
-                    <el-select v-model="bloodPressureForm.residentName" placeholder="请选择老人姓名" style="width: 200px;">
-                      <el-option label="张三" value="张三" />
-                      <el-option label="李四" value="李四" />
-                      <el-option label="王五" value="王五" />
+                    <el-select v-model="bloodPressureForm.residentId" placeholder="请选择老人姓名" style="width: 200px;">
+                      <el-option
+                        v-for="resident in residentsList"
+                        :key="resident.id"
+                        :label="resident.name"
+                        :value="resident.id"
+                      />
                     </el-select>
                   </el-form-item>
                   <el-form-item label="收缩压(mmHg)" required>
@@ -63,10 +66,13 @@
               <div class="tab-content">
                 <el-form :model="bloodSugarForm" label-width="120px" class="health-form">
                   <el-form-item label="老人姓名" required>
-                    <el-select v-model="bloodSugarForm.residentName" placeholder="请选择老人姓名" style="width: 200px;">
-                      <el-option label="张三" value="张三" />
-                      <el-option label="李四" value="李四" />
-                      <el-option label="王五" value="王五" />
+                    <el-select v-model="bloodSugarForm.residentId" placeholder="请选择老人姓名" style="width: 200px;">
+                      <el-option
+                        v-for="resident in residentsList"
+                        :key="resident.id"
+                        :label="resident.name"
+                        :value="resident.id"
+                      />
                     </el-select>
                   </el-form-item>
                   <el-form-item label="血糖值(mmol/L)" required>
@@ -112,10 +118,13 @@
               <div class="tab-content">
                 <el-form :model="heartRateForm" label-width="120px" class="health-form">
                   <el-form-item label="老人姓名" required>
-                    <el-select v-model="heartRateForm.residentName" placeholder="请选择老人姓名" style="width: 200px;">
-                      <el-option label="张三" value="张三" />
-                      <el-option label="李四" value="李四" />
-                      <el-option label="王五" value="王五" />
+                    <el-select v-model="heartRateForm.residentId" placeholder="请选择老人姓名" style="width: 200px;">
+                      <el-option
+                        v-for="resident in residentsList"
+                        :key="resident.id"
+                        :label="resident.name"
+                        :value="resident.id"
+                      />
                     </el-select>
                   </el-form-item>
                   <el-form-item label="心率值(次/分)" required>
@@ -198,15 +207,19 @@ import {
   addBloodSugarRecord,
   getHeartRateRecords,
   addHeartRateRecord,
-  getHealthAlerts
+  getHealthAlerts,
+  getAllResidents
 } from '@/api/resident'
 
 // 标签页切换
 const activeTab = ref('bloodPressure')
 
+// 老人列表
+const residentsList = ref([])
+
 // 血压记录表单
 const bloodPressureForm = reactive({
-  residentName: '',
+  residentId: '',
   systolic: 0,
   diastolic: 0,
   measureTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
@@ -215,7 +228,7 @@ const bloodPressureForm = reactive({
 
 // 血糖记录表单
 const bloodSugarForm = reactive({
-  residentName: '',
+  residentId: '',
   level: 0,
   measureTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
   status: '空腹',
@@ -224,7 +237,7 @@ const bloodSugarForm = reactive({
 
 // 心率记录表单
 const heartRateForm = reactive({
-  residentName: '',
+  residentId: '',
   rate: 0,
   measureTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
   notes: ''
@@ -283,7 +296,21 @@ const fetchHeartRateRecords = async () => {
   }
 }
 
-
+// 获取老人列表
+const fetchResidentsList = async () => {
+  try {
+    const response = await getAllResidents()
+    if (response.data.success) {
+      // 过滤出当前入住的老人
+      residentsList.value = (response.data.data || []).filter(resident => resident.status === '入住')
+    } else {
+      ElMessage.error(response.data.message || '获取老人列表失败')
+    }
+  } catch (error) {
+    ElMessage.error('获取老人列表失败')
+    console.error('获取老人列表失败:', error)
+  }
+}
 
 // 获取健康预警
 const fetchHealthAlerts = async () => {
@@ -302,7 +329,7 @@ const fetchHealthAlerts = async () => {
 
 // 保存血压记录
 const saveBloodPressure = async () => {
-  if (!bloodPressureForm.residentName || !bloodPressureForm.systolic || !bloodPressureForm.diastolic) {
+  if (!bloodPressureForm.residentId || !bloodPressureForm.systolic || !bloodPressureForm.diastolic) {
     ElMessage.warning('请填写完整的血压记录信息')
     return
   }
@@ -316,6 +343,7 @@ const saveBloodPressure = async () => {
       
       // 重置表单
       Object.assign(bloodPressureForm, {
+        residentId: '',
         systolic: 0,
         diastolic: 0,
         measureTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
@@ -332,7 +360,7 @@ const saveBloodPressure = async () => {
 
 // 保存血糖记录
 const saveBloodSugar = async () => {
-  if (!bloodSugarForm.residentName || !bloodSugarForm.level) {
+  if (!bloodSugarForm.residentId || !bloodSugarForm.level) {
     ElMessage.warning('请填写完整的血糖记录信息')
     return
   }
@@ -346,6 +374,7 @@ const saveBloodSugar = async () => {
       
       // 重置表单
       Object.assign(bloodSugarForm, {
+        residentId: '',
         level: 0,
         measureTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
         status: '空腹',
@@ -362,7 +391,7 @@ const saveBloodSugar = async () => {
 
 // 保存心率记录
 const saveHeartRate = async () => {
-  if (!heartRateForm.residentName || !heartRateForm.rate) {
+  if (!heartRateForm.residentId || !heartRateForm.rate) {
     ElMessage.warning('请填写完整的心率记录信息')
     return
   }
@@ -376,6 +405,7 @@ const saveHeartRate = async () => {
       
       // 重置表单
       Object.assign(heartRateForm, {
+        residentId: '',
         rate: 0,
         measureTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
         notes: ''
@@ -440,6 +470,7 @@ const removeAlert = (index) => {
 
 // 组件挂载时获取数据
 onMounted(() => {
+  fetchResidentsList()
   fetchBloodPressureRecords()
   fetchBloodSugarRecords()
   fetchHeartRateRecords()
