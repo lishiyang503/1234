@@ -313,12 +313,43 @@
         <el-divider class="form-divider">住户信息</el-divider>
         
         <el-row :gutter="25">
+          <el-col :span="24">
+            <el-form-item label="选择老人" prop="residentId" class="form-item">
+              <el-select
+                v-model="bedForm.residentId"
+                placeholder="请选择已登记的老人"
+                :disabled="bedForm.status === '空闲'"
+                size="large"
+                class="form-input"
+                style="width: 100%;"
+                @change="handleResidentChange"
+              >
+                <el-option
+                  v-for="resident in residentList"
+                  :key="resident.id"
+                  :label="resident.name"
+                  :value="resident.id"
+                >
+                  <div class="resident-option">
+                    <span class="resident-name">{{ resident.name }}</span>
+                    <span class="resident-info">{{ resident.phone }} | {{ resident.idNumber }}</span>
+                  </div>
+                </el-option>
+              </el-select>
+              <div v-if="residentList.length === 0 && !loadingResidents" class="no-residents-tip">
+                暂无已登记的老人，请先在入住登记功能中添加老人信息
+              </div>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        
+        <el-row :gutter="25">
           <el-col :span="12">
             <el-form-item label="住户姓名" prop="residentName" class="form-item">
               <el-input
                 v-model="bedForm.residentName"
-                placeholder="请输入住户姓名"
-                :disabled="bedForm.status === '空闲'"
+                placeholder="住户姓名"
+                disabled
                 size="large"
                 class="form-input"
               />
@@ -328,8 +359,8 @@
             <el-form-item label="联系电话" prop="residentPhone" class="form-item">
               <el-input
                 v-model="bedForm.residentPhone"
-                placeholder="请输入联系电话"
-                :disabled="bedForm.status === '空闲'"
+                placeholder="联系电话"
+                disabled
                 size="large"
                 class="form-input"
               />
@@ -343,10 +374,10 @@
               <el-date-picker
                 v-model="bedForm.checkInDate"
                 type="datetime"
-                placeholder="选择入住日期和时间"
+                placeholder="入住时间"
                 format="YYYY-MM-DD HH:mm"
                 value-format="YYYY-MM-DD HH:mm:ss"
-                :disabled="bedForm.status === '空闲'"
+                disabled
                 size="large"
                 class="form-input"
               />
@@ -494,6 +525,7 @@ import {
 } from '@element-plus/icons-vue'
 import * as roomApi from '@/api/room'
 import * as bedApi from '@/api/bed'
+import * as residentApi from '@/api/resident'
 
 const route = useRoute()
 const router = useRouter()
@@ -501,9 +533,11 @@ const router = useRouter()
 const roomId = route.params.roomId
 const roomInfo = ref({})
 const bedList = ref([])
+const residentList = ref([]) // 存储所有已登记的老人
 const selectedBeds = ref([])
 const searchName = ref('')
 const loading = ref(false)
+const loadingResidents = ref(false)
 const submitting = ref(false)
 const checkoutLoading = ref(false)
 
@@ -523,6 +557,7 @@ const bedForm = reactive({
   roomId: Number(roomId),
   bedNumber: '',
   status: '空闲',
+  residentId: null, // 存储选择的老人ID
   residentName: '',
   residentPhone: '',
   checkInDate: '',
@@ -543,14 +578,14 @@ const bedRules = {
   status: [
     { required: true, message: '请选择状态', trigger: 'change' }
   ],
-  residentName: [
+  residentId: [
     { 
       required: true, 
-      message: '请输入住户姓名', 
-      trigger: 'blur',
+      message: '请选择已登记的老人', 
+      trigger: 'change',
       validator: (rule, value, callback) => {
         if (bedForm.status === '已占用' && !value) {
-          callback(new Error('住户姓名不能为空'))
+          callback(new Error('请选择已登记的老人'))
         } else {
           callback()
         }
@@ -620,6 +655,7 @@ const handleBedSelectionChange = (bed) => {
 onMounted(() => {
   fetchRoomInfo()
   fetchBeds()
+  fetchResidents()
 })
 
 // 方法
@@ -645,6 +681,27 @@ const fetchRoomInfo = async () => {
     }
   }
 
+  // 获取所有已登记的老人列表，只显示状态为"入住"的老人
+  const fetchResidents = async () => {
+    try {
+      loadingResidents.value = true
+      const response = await residentApi.getAllResidents()
+      if (response.data && response.data.data) {
+        // 过滤出状态为"入住"的老人，已离院的老人不显示
+        residentList.value = response.data.data.filter(resident => 
+          resident.status === '入住'
+        )
+      } else {
+        ElMessage.error('获取老人列表失败')
+      }
+    } catch (error) {
+      console.error('获取老人列表失败:', error)
+      ElMessage.error('获取老人列表失败')
+    } finally {
+      loadingResidents.value = false
+    }
+  }
+
   const fetchBeds = async () => {
     loading.value = true
     try {
@@ -660,17 +717,23 @@ const fetchRoomInfo = async () => {
         
         // 正常情况：直接返回data数组
         const bedData = Array.isArray(response.data.data) ? response.data.data : response.data
-        bedList.value = bedData.map(bed => ({
-          bedId: bed.id,
-          roomId: bed.roomId || Number(roomId),
-          bedNumber: bed.bedNumber,
-          status: bed.status === 0 ? '空闲' : '已占用',
-          residentName: bed.residentName || '',
-          residentPhone: bed.residentPhone || '',
-          checkInDate: bed.checkInDate || '',
-          checkOutDate: bed.checkOutDate || '',
-          notes: bed.notes || ''
-        }))
+        bedList.value = bedData.map(bed => {
+            // 直接使用residentId判断是否有住户，更准确
+            const actualStatus = bed.residentId !== null ? '已占用' : '空闲';
+            
+            return {
+              bedId: bed.id,
+              roomId: bed.roomId || Number(roomId),
+              bedNumber: bed.bedNumber,
+              status: actualStatus,
+              residentId: bed.residentId || null, // 添加residentId字段
+              residentName: bed.residentName || '',
+              residentPhone: bed.residentPhone || '',
+              checkInDate: bed.checkInDate || '',
+              checkOutDate: bed.checkOutDate || '',
+              notes: bed.notes || ''
+            };
+          })
         console.log('获取到的床位数据:', bedList.value)
       } else {
         ElMessage.error('获取床位列表失败: 无效的响应格式')
@@ -713,14 +776,28 @@ const handleAddBed = () => {
 const handleEditBed = (bed) => {
   isEdit.value = true
   currentBedId.value = bed.bedId
-  Object.assign(bedForm, bed)
+  
+  // 初始化表单数据
+  bedForm.roomId = Number(roomId)
+  bedForm.bedNumber = bed.bedNumber
+  bedForm.status = bed.status
+  bedForm.residentId = bed.residentId || null
+  bedForm.residentName = bed.residentName || ''
+  bedForm.residentPhone = bed.residentPhone || ''
+  bedForm.notes = bed.notes || ''
+  
   // 转换日期格式
-  if (bedForm.checkInDate) {
-    bedForm.checkInDate = formatDateTimeForInput(bedForm.checkInDate)
+  if (bed.checkInDate) {
+    bedForm.checkInDate = formatDateTimeForInput(bed.checkInDate)
+  } else {
+    bedForm.checkInDate = ''
   }
-  if (bedForm.checkOutDate) {
-    bedForm.checkOutDate = formatDateTimeForInput(bedForm.checkOutDate)
+  if (bed.checkOutDate) {
+    bedForm.checkOutDate = formatDateTimeForInput(bed.checkOutDate)
+  } else {
+    bedForm.checkOutDate = ''
   }
+  
   dialogVisible.value = true
 }
 
@@ -749,16 +826,10 @@ const confirmCheckOut = async () => {
     if (batchCheckoutMode.value) {
       // 批量出院
       const promises = selectedBeds.value.map(bed => {
-        const updatedBed = {
-          ...bed,
-          status: '空闲',
-          residentName: '',
-          residentPhone: '',
-          checkInDate: '',
-          checkOutDate: '',
-          notes: checkoutForm.notes || bed.notes
+        if (bed.residentId) {
+          return residentApi.dischargeResident(bed.residentId, checkoutForm.notes || '正常出院', 'admin')
         }
-        return bedApi.updateBed(updatedBed)
+        return Promise.resolve()
       })
       
       await Promise.all(promises)
@@ -766,18 +837,12 @@ const confirmCheckOut = async () => {
       selectedBeds.value = []
     } else {
       // 单个床位出院
-      const updatedBed = {
-        ...checkoutBed.value,
-        status: '空闲',
-        residentName: '',
-        residentPhone: '',
-        checkInDate: '',
-        checkOutDate: '',
-        notes: checkoutForm.notes || checkoutBed.value.notes
+      if (checkoutBed.value.residentId) {
+        await residentApi.dischargeResident(checkoutBed.value.residentId, checkoutForm.notes || '正常出院', 'admin')
+        ElMessage.success('出院成功')
+      } else {
+        ElMessage.warning('该床位未入住老人')
       }
-      
-      await bedApi.updateBed(updatedBed)
-      ElMessage.success('出院成功')
     }
     
     checkoutDialogVisible.value = false
@@ -785,7 +850,7 @@ const confirmCheckOut = async () => {
     
   } catch (error) {
     console.error('出院操作失败:', error)
-    ElMessage.error('出院操作失败')
+    ElMessage.error('出院操作失败: ' + (error.response?.data?.message || error.message))
   } finally {
     checkoutLoading.value = false
   }
@@ -801,17 +866,22 @@ const handleSubmit = async () => {
         roomId: Number(roomId),
         bedNumber: bedForm.bedNumber,
         status: bedForm.status === '空闲' ? 0 : 1,
-        residentName: bedForm.status === '空闲' ? '' : bedForm.residentName,
-        residentPhone: bedForm.status === '空闲' ? '' : bedForm.residentPhone,
-        checkInDate: bedForm.status === '空闲' ? null : bedForm.checkInDate,
-        checkOutDate: bedForm.status === '空闲' ? null : bedForm.checkOutDate,
+        residentId: bedForm.status === '空闲' ? null : bedForm.residentId,
         notes: bedForm.notes || ''
+      }
+      
+      // 如果是占用状态，添加居民信息
+      if (submitData.status === 1) {
+        submitData.residentName = bedForm.residentName
+        submitData.residentPhone = bedForm.residentPhone
+        submitData.checkInDate = bedForm.checkInDate
+        submitData.checkOutDate = bedForm.checkOutDate
       }
       
       if (isEdit.value) {
         submitData.id = currentBedId.value
         const response = await bedApi.updateBed(submitData)
-        if (response.status === 200) {
+        if (response.data.success || response.status === 200) {
           ElMessage.success({
             message: '床位信息更新成功',
             type: 'success',
@@ -820,11 +890,11 @@ const handleSubmit = async () => {
           dialogVisible.value = false
           fetchBeds()
         } else {
-          ElMessage.error('更新失败')
+          ElMessage.error('更新失败: ' + (response.data.message || '未知错误'))
         }
       } else {
         const response = await bedApi.addBed(submitData)
-        if (response.status === 200) {
+        if (response.data.success || response.status === 200) {
           ElMessage.success({
             message: '床位添加成功',
             type: 'success',
@@ -833,7 +903,7 @@ const handleSubmit = async () => {
           dialogVisible.value = false
           fetchBeds()
         } else {
-          ElMessage.error('添加失败')
+          ElMessage.error('添加失败: ' + (response.data.message || '未知错误'))
         }
       }
     } catch (error) {
@@ -844,10 +914,32 @@ const handleSubmit = async () => {
     }
   }
 
+const handleResidentChange = (residentId) => {
+    // 根据选择的老人ID，自动填充姓名、电话、入住时间，并设置床位状态为已占用
+    const selectedResident = residentList.value.find(resident => resident.id === residentId)
+    if (selectedResident) {
+      bedForm.residentName = selectedResident.name
+      bedForm.residentPhone = selectedResident.phone
+      // 自动填充入住时间，格式化为日期时间字符串
+      if (selectedResident.entryDate) {
+        const entryDate = new Date(selectedResident.entryDate)
+        bedForm.checkInDate = formatDateTimeForInput(entryDate)
+      } else {
+        bedForm.checkInDate = ''
+      }
+      // 选择老人时，自动将床位状态设置为已占用
+      bedForm.status = '已占用'
+    } else {
+      bedForm.residentName = ''
+      bedForm.residentPhone = ''
+      bedForm.checkInDate = ''
+    }
+  }
+
 const handleDeleteBed = async (bedId) => {
     try {
       const response = await bedApi.deleteBed(bedId)
-      if (response.status === 200) {
+      if (response.data.success || response.status === 200) {
         ElMessage.success({
           message: '床位删除成功',
           type: 'success',
@@ -855,11 +947,11 @@ const handleDeleteBed = async (bedId) => {
         })
         fetchBeds()
       } else {
-        ElMessage.error('删除失败')
+        ElMessage.error('删除失败: ' + (response.data.message || '未知错误'))
       }
     } catch (error) {
       console.error('删除失败:', error)
-      ElMessage.error('删除失败')
+      ElMessage.error('删除失败: ' + error.message)
     }
   }
 
@@ -898,7 +990,7 @@ const handleDeleteBed = async (bedId) => {
 
   const handleCompleteRepair = async () => {
     try {
-      await ElMessageBox.confirm('确定要完成维修吗？', '完成维修', {
+      await ElMessageBox.confirm('确定要完成维修吗？系统将根据实际入住情况更新房间状态。', '完成维修', {
         type: 'warning',
         confirmButtonText: '确定',
         cancelButtonText: '取消'
@@ -907,7 +999,7 @@ const handleDeleteBed = async (bedId) => {
       const response = await roomApi.completeRepair(roomId)
       
       if (response.status === 200) {
-        ElMessage.success('维修完成，房间已恢复为空闲状态')
+        ElMessage.success('维修完成，房间状态已根据实际入住情况更新')
         fetchRoomInfo()
       }
     } catch (error) {

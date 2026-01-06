@@ -212,6 +212,7 @@
             v-model="roomForm.roomType"
             placeholder="选择房间类型"
             class="form-select"
+            @change="handleRoomTypeChange"
           >
             <el-option label="单人间" value="单人间" />
             <el-option label="双人间" value="双人间" />
@@ -235,6 +236,7 @@
             v-model="roomForm.status"
             placeholder="选择房间状态"
             class="form-select"
+            disabled
           >
             <el-option label="空闲" :value="0" />
             <el-option label="已满" :value="1" />
@@ -354,6 +356,7 @@ import {
   PieChart
 } from '@element-plus/icons-vue'
 import * as roomApi from '@/api/room'
+import * as bedApi from '@/api/bed'
 
 const router = useRouter()
 
@@ -430,7 +433,7 @@ const fetchRooms = async () => {
       
       if (response.data) {
         // 适配后端返回的数据结构，将id映射为roomId，bedCount映射为totalBeds
-        roomList.value = response.data.data.map(room => ({
+        const rooms = response.data.data.map(room => ({
           roomId: room.id,
           roomNumber: room.roomNumber,
           roomType: room.roomType,
@@ -441,6 +444,40 @@ const fetchRooms = async () => {
           repairStartDate: room.repairStartDate || '',
           repairEndDate: room.repairEndDate || ''
         })) || []
+        
+        // 为每个房间获取床位信息，然后更新房间状态
+        const roomsWithUpdatedStatus = await Promise.all(rooms.map(async (room) => {
+          // 如果房间状态是维修中，保持不变
+          if (room.status === 2) {
+            return room;
+          }
+          
+          try {
+            // 获取房间的床位列表
+            const bedResponse = await bedApi.getBedsByRoomId(room.roomId);
+            if (bedResponse.data && bedResponse.data.data) {
+              const beds = bedResponse.data.data;
+              
+              // 计算已占用的床位数，直接使用residentId判断，更准确
+              const occupiedBeds = beds.filter(bed => bed.residentId !== null).length;
+              
+              // 如果已占用床位数等于总床位数，状态设为已满
+              // 否则设为空闲
+              const actualStatus = occupiedBeds === room.totalBeds ? 1 : 0;
+              
+              return {
+                ...room,
+                status: actualStatus
+              };
+            }
+          } catch (bedError) {
+            console.error(`获取房间${room.roomNumber}的床位信息失败:`, bedError);
+          }
+          
+          return room;
+        }));
+        
+        roomList.value = roomsWithUpdatedStatus;
         
         // 更新统计信息
         updateStats()
@@ -503,6 +540,27 @@ const handleEditRoom = (room) => {
   dialogVisible.value = true
 }
 
+// 选择房间类型后自动设置床位数量
+const handleRoomTypeChange = (roomType) => {
+  // 根据房间类型自动设置床位数量
+  switch (roomType) {
+    case '单人间':
+      roomForm.totalBeds = 1
+      break
+    case '双人间':
+      roomForm.totalBeds = 2
+      break
+    case '三人间':
+      roomForm.totalBeds = 3
+      break
+    case 'VIP套房':
+      roomForm.totalBeds = 1
+      break
+    default:
+      roomForm.totalBeds = 1
+  }
+}
+
 const handleSubmit = async () => {
     try {
       await roomFormRef.value.validate()
@@ -513,7 +571,7 @@ const handleSubmit = async () => {
         roomNumber: roomForm.roomNumber,
         roomType: roomForm.roomType,
         bedCount: roomForm.totalBeds,
-        status: roomForm.status,
+        status: 0, // 固定为空闲状态
         description: roomForm.description
       }
       
@@ -555,18 +613,19 @@ const handleSubmit = async () => {
 
 const handleDeleteRoom = async (roomId) => {
     try {
-      await ElMessageBox.confirm('确定要删除这个房间吗？此操作不可撤销。', '确认删除', {
+      await ElMessageBox.confirm('请选择删除方式：', '确认删除', {
         type: 'warning',
-        confirmButtonText: '确认删除',
-        cancelButtonText: '取消',
-        confirmButtonClass: 'confirm-delete-btn',
-        cancelButtonClass: 'cancel-delete-btn'
+        confirmButtonText: '删除信息（保留床位）',
+        cancelButtonText: '删除床位',
+        distinguishCancelAndClose: true,
+        cancelButtonClass: 'confirm-delete-btn'
       })
       
-      const response = await roomApi.deleteRoom(roomId)
+      // 用户点击"删除信息（保留床位）"
+      const response = await roomApi.deleteRoomInfo(roomId)
       if (response.status === 200) {
         ElMessage.success({
-          message: '房间删除成功',
+          message: '房间信息删除成功，床位已保留',
           type: 'success',
           showClose: true
         })
@@ -575,8 +634,33 @@ const handleDeleteRoom = async (roomId) => {
         ElMessage.error('删除失败')
       }
     } catch (error) {
-      if (error !== 'cancel') {
-        console.error('删除失败:', error)
+      if (error === 'cancel') {
+        // 用户点击"删除床位"
+        try {
+          await ElMessageBox.confirm('确定要删除这个房间及所有床位吗？此操作不可撤销。', '确认删除', {
+            type: 'danger',
+            confirmButtonText: '确认删除',
+            cancelButtonText: '取消',
+            confirmButtonClass: 'confirm-delete-btn',
+            cancelButtonClass: 'cancel-delete-btn'
+          })
+          
+          const response = await roomApi.deleteRoom(roomId)
+          if (response.status === 200) {
+            ElMessage.success({
+              message: '房间删除成功',
+              type: 'success',
+              showClose: true
+            })
+            fetchRooms()
+          } else {
+            ElMessage.error('删除失败')
+          }
+        } catch (innerError) {
+          if (innerError !== 'cancel') {
+            console.error('删除失败:', innerError)
+          }
+        }
       }
     }
 }
@@ -613,7 +697,7 @@ const handleSubmitRepair = async () => {
 
 const handleCompleteRepair = async (roomId) => {
     try {
-      await ElMessageBox.confirm('确定要完成维修吗？房间将恢复为空闲状态。', '确认完成维修', {
+      await ElMessageBox.confirm('确定要完成维修吗？系统将根据实际入住情况更新房间状态。', '确认完成维修', {
         type: 'warning',
         confirmButtonText: '完成维修',
         cancelButtonText: '取消'
@@ -622,7 +706,7 @@ const handleCompleteRepair = async (roomId) => {
       const response = await roomApi.completeRepair(roomId)
       if (response.status === 200) {
         ElMessage.success({
-          message: '维修完成，房间已恢复为空闲状态',
+          message: '维修完成，房间状态已根据实际入住情况更新',
           type: 'success',
           showClose: true
         })

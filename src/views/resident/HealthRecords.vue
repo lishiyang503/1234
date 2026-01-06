@@ -9,10 +9,6 @@
       <div class="card">
         <div class="card-header">
           <h3 class="card-title">核心健康档案</h3>
-          <el-button type="primary" @click="showAddDialog">
-            <el-icon><Plus /></el-icon>
-            添加健康档案
-          </el-button>
         </div>
         
         <div class="card-body">
@@ -46,7 +42,11 @@
               empty-text="暂无健康档案数据"
               :row-style="tableRowStyle"
             >
-              <el-table-column prop="id" label="ID" width="80" align="center" />
+              <el-table-column label="ID" width="80" align="center">
+                <template #default="scope">
+                  {{ scope.$index + 1 }}
+                </template>
+              </el-table-column>
               <el-table-column prop="residentName" label="老人姓名" width="150" sortable />
               <el-table-column prop="roomNumber" label="房间号" width="120" align="center" sortable />
               <el-table-column prop="bedNumber" label="床位号" width="120" align="center" sortable />
@@ -478,12 +478,7 @@ const resetForm = () => {
   })
 }
 
-// 显示添加对话框
-const showAddDialog = () => {
-  dialogTitle.value = '添加健康档案'
-  resetForm()
-  dialogVisible.value = true
-}
+
 
 // 显示编辑对话框
 const showEditDialog = (row) => {

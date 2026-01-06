@@ -67,6 +67,14 @@ export function deleteRoom(roomId) {
   })
 }
 
+// 删除房间信息（保留床位）
+export function deleteRoomInfo(roomId) {
+  return request({
+    url: `/rooms/info/${roomId}`,
+    method: 'delete'
+  })
+}
+
 // 设置维修状态
 export function setRoomRepair(roomId, data) {
   return request({

@@ -173,10 +173,24 @@
             
             <div class="form-row">
               <el-form-item label="房间号" prop="roomNumber" class="form-item">
-                <el-input v-model="residentForm.roomNumber" placeholder="请输入房间号" />
+                <el-select v-model="residentForm.roomNumber" placeholder="请选择房间号" @change="handleRoomChange">
+                  <el-option
+                    v-for="room in roomList"
+                    :key="room.roomNumber"
+                    :label="room.roomNumber"
+                    :value="room.roomNumber"
+                  />
+                </el-select>
               </el-form-item>
               <el-form-item label="床位号" prop="bedNumber" class="form-item">
-                <el-input v-model="residentForm.bedNumber" placeholder="请输入床位号" />
+                <el-select v-model="residentForm.bedNumber" placeholder="请选择床位号">
+                  <el-option
+                    v-for="bed in availableBeds"
+                    :key="bed.bedNumber"
+                    :label="bed.bedNumber"
+                    :value="bed.bedNumber"
+                  />
+                </el-select>
               </el-form-item>
             </div>
           </el-form>
@@ -187,6 +201,23 @@
             :model="residentForm"
             label-width="120px"
           >
+            <div class="form-row">
+              <el-form-item label="身高(cm)">
+                <el-input v-model="residentForm.height" type="number" placeholder="请输入身高" min="50" max="250" step="0.1" />
+              </el-form-item>
+              <el-form-item label="体重(kg)">
+                <el-input v-model="residentForm.weight" type="number" placeholder="请输入体重" min="20" max="200" step="0.1" />
+              </el-form-item>
+              <el-form-item label="血型">
+                <el-select v-model="residentForm.bloodType" placeholder="请选择血型">
+                  <el-option label="A型" value="A型" />
+                  <el-option label="B型" value="B型" />
+                  <el-option label="AB型" value="AB型" />
+                  <el-option label="O型" value="O型" />
+                  <el-option label="其他" value="其他" />
+                </el-select>
+              </el-form-item>
+            </div>
             <el-form-item label="既往病史">
               <el-input
                 v-model="residentForm.medicalHistory"
@@ -226,10 +257,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Edit, Delete, ArrowRight, ArrowDown } from '@element-plus/icons-vue'
-import { getResidentList, addResident, updateResident, deleteResident, checkoutResident } from '@/api/resident'
+import { getResidentList, addResident, updateResident, deleteResident, checkoutResident, addHealthRecord, updateHealthRecord, getHealthRecords } from '@/api/resident'
+import { getAllRooms } from '@/api/room'
+import { getAllBeds } from '@/api/bed'
 
 // 搜索和筛选参数
 const searchParams = reactive({
@@ -243,6 +276,13 @@ const total = ref(0)
 const currentPage = ref(1)
 const pageSize = ref(10)
 const loading = ref(false)
+
+// 房间和床位数据
+const roomList = ref([])
+const bedList = ref([])
+const availableBeds = ref([])
+const loadingRooms = ref(false)
+const loadingBeds = ref(false)
 
 // 对话框
 const dialogVisible = ref(false)
@@ -266,9 +306,13 @@ const residentForm = reactive({
   entryDate: '',
   roomNumber: '',
   bedNumber: '',
+  height: '',
+  weight: '',
+  bloodType: '',
   medicalHistory: '',
   allergyHistory: '',
   healthStatus: '',
+  healthRecordId: null,
   status: '入住'
 })
 
@@ -289,6 +333,8 @@ const residentRules = {
 // 生命周期
 onMounted(() => {
   fetchResidentList()
+  fetchRooms()
+  fetchBeds()
 })
 
 // 获取入住登记列表
@@ -348,6 +394,99 @@ const handleCurrentChange = (page) => {
   fetchResidentList()
 }
 
+// 获取房间列表
+const fetchRooms = async () => {
+  loadingRooms.value = true
+  try {
+    const response = await getAllRooms()
+    console.log('房间列表响应:', response)
+    
+    // 兼容不同的响应格式
+    if (response.data && response.data.success) {
+      roomList.value = response.data.data || []
+    } else if (response.data) {
+      // 如果直接返回数据数组
+      roomList.value = response.data
+    } else {
+      // 其他情况
+      roomList.value = []
+    }
+    
+    console.log('处理后的roomList:', roomList.value)
+    ElMessage.success('获取房间列表成功')
+  } catch (error) {
+    console.error('获取房间列表失败:', error)
+    ElMessage.error('获取房间列表失败: ' + (error.message || '未知错误'))
+    roomList.value = [] // 确保roomList始终是数组
+  } finally {
+    loadingRooms.value = false
+  }
+}
+
+// 获取床位列表
+const fetchBeds = async () => {
+  loadingBeds.value = true
+  try {
+    const response = await getAllBeds()
+    console.log('床位列表响应:', response)
+    // 兼容不同的响应格式
+    if (response.data && response.data.success) {
+      bedList.value = response.data.data || []
+    } else if (response.data) {
+      // 如果直接返回数据数组
+      bedList.value = response.data
+    } else {
+      // 其他情况
+      bedList.value = []
+    }
+    // 默认过滤可用床位
+    updateAvailableBeds()
+    ElMessage.success('获取床位列表成功')
+  } catch (error) {
+    console.error('获取床位列表失败:', error)
+    ElMessage.error('获取床位列表失败: ' + (error.message || '未知错误'))
+  } finally {
+    loadingBeds.value = false
+  }
+}
+
+// 更新可用床位
+const updateAvailableBeds = () => {
+  // 确保bedList.value是数组
+  const beds = Array.isArray(bedList.value) ? bedList.value : []
+  console.log('当前bedList:', beds)
+  console.log('当前roomNumber:', residentForm.roomNumber)
+  
+  if (residentForm.roomNumber) {
+    // 筛选对应房间的可用床位（0表示空闲）
+    // 床位号格式为"房间号-床位"，如"101-A"，所以可以通过床位号前缀匹配房间号
+    availableBeds.value = beds.filter(bed => {
+      // 检查bed是否有效
+      if (!bed || !bed.bedNumber) return false
+      
+      // 获取床位号的房间号部分（如"101-A" -> "101"）
+      const bedRoomNumber = bed.bedNumber.split('-')[0]
+      
+      console.log('检查床位:', bed.bedNumber, '房间号:', bedRoomNumber, '状态:', bed.status)
+      
+      return bedRoomNumber === residentForm.roomNumber && bed.status === 0
+    })
+  } else {
+    // 没有选择房间时，显示所有可用床位
+    availableBeds.value = beds.filter(bed => bed && bed.status === 0)
+  }
+  
+  console.log('可用床位:', availableBeds.value)
+}
+
+// 处理房间变化
+const handleRoomChange = () => {
+  // 清空当前选择的床位
+  residentForm.bedNumber = ''
+  // 更新可用床位
+  updateAvailableBeds()
+}
+
 // 表格行样式
 const tableRowClassName = ({ row, rowIndex }) => {
   return rowIndex % 2 === 0 ? 'even-row' : 'odd-row'
@@ -359,6 +498,33 @@ const showAddDialog = () => {
   dialogTitle.value = '新增入住登记'
   resetForm()
   dialogVisible.value = true
+  // 重新获取最新的房间和床位信息
+  fetchRooms()
+  fetchBeds()
+}
+
+// 获取健康档案信息
+const fetchHealthRecord = async (residentId) => {
+  try {
+    const response = await getHealthRecords({ residentId })
+    console.log('健康档案信息响应:', response)
+    
+    if (response.data && response.data.success) {
+      const healthRecords = response.data.data?.list || []
+      if (healthRecords.length > 0) {
+        const healthRecord = healthRecords[0]
+        residentForm.height = healthRecord.height || ''
+        residentForm.weight = healthRecord.weight || ''
+        residentForm.bloodType = healthRecord.bloodType || ''
+        residentForm.medicalHistory = healthRecord.medicalHistory || ''
+        residentForm.allergyHistory = healthRecord.allergyHistory || ''
+        residentForm.healthStatus = healthRecord.healthNotes || ''
+        residentForm.healthRecordId = healthRecord.id || null
+      }
+    }
+  } catch (error) {
+    console.error('获取健康档案信息失败:', error)
+  }
 }
 
 // 显示编辑对话框
@@ -366,6 +532,8 @@ const showEditDialog = (row) => {
   isEditMode.value = true
   dialogTitle.value = '编辑入住登记'
   Object.assign(residentForm, row)
+  // 获取健康档案信息
+  fetchHealthRecord(row.id)
   dialogVisible.value = true
 }
 
@@ -383,9 +551,13 @@ const resetForm = () => {
     entryDate: '',
     roomNumber: '',
     bedNumber: '',
+    height: '',
+    weight: '',
+    bloodType: '',
     medicalHistory: '',
     allergyHistory: '',
     healthStatus: '',
+    healthRecordId: null,
     status: '入住'
   })
   activeTab.value = 'basic'
@@ -403,21 +575,70 @@ const handleSubmit = async () => {
     // 表单验证
     await residentFormRef.value.validate()
     
+    // 处理日期字段
+    const formData = { ...residentForm }
+    // 确保 entryDate 是正确的日期格式
+    if (formData.entryDate) {
+      if (formData.entryDate instanceof Date) {
+        // 转换为 ISO 格式字符串
+        formData.entryDate = formData.entryDate.toISOString()
+      } else if (typeof formData.entryDate === 'string') {
+        // 如果已经是字符串，确保格式正确
+        try {
+          const date = new Date(formData.entryDate)
+          formData.entryDate = date.toISOString()
+        } catch (error) {
+          console.error('日期格式错误:', error)
+        }
+      }
+    }
+    
     let response
+    let residentId
     
     if (isEditMode.value) {
       // 编辑入住登记
-      response = await updateResident(residentForm)
+      response = await updateResident(formData)
+      residentId = formData.id
       successMessage = '编辑成功'
       errorMessage = '编辑失败'
     } else {
       // 添加入住登记
-      response = await addResident(residentForm)
+      response = await addResident(formData)
+      // 从响应中获取新创建的居民ID
+      residentId = response.data.data?.id || formData.id
       successMessage = '新增成功'
       errorMessage = '新增失败'
     }
     
-    if (response.data.success) {
+    if (response.data.success && residentId) {
+      // 保存健康档案信息
+      // 构建完整的请求数据，包含healthRecord字段
+      const updateData = {
+        ...formData,
+        healthRecord: {
+          residentId: residentId,
+          residentName: formData.name,
+          roomNumber: formData.roomNumber,
+          bedNumber: formData.bedNumber,
+          medicalHistory: formData.medicalHistory || '',
+          allergyHistory: formData.allergyHistory || '',
+          bloodType: formData.bloodType || '',
+          height: formData.height || '',
+          weight: formData.weight || '',
+          healthNotes: formData.healthStatus || ''
+        }
+      }
+      
+      if (isEditMode.value) {
+        // 编辑健康档案
+        updateData.healthRecord.id = formData.healthRecordId
+        await updateResident(updateData)
+      } else {
+        // 添加健康档案
+        // 健康档案已在addResident中处理
+      }
+      
       ElMessage.success(successMessage)
       dialogVisible.value = false
       fetchResidentList()

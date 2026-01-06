@@ -36,11 +36,16 @@ export const deleteResident = (id) => {
   })
 }
 
-// 办理退房
+// 办理退房（通过更新入住登记的状态实现）
 export const checkoutResident = (id) => {
   return request({
-    url: `/resident/checkout/${id}`,
-    method: 'put'
+    url: `/resident/update`,
+    method: 'put',
+    data: {
+      id: id,
+      status: '退房',
+      exitDate: new Date()
+    }
   })
 }
 
@@ -57,7 +62,7 @@ export const getHealthRecords = (params) => {
 // 添加健康档案
 export const addHealthRecord = (data) => {
   return request({
-    url: '/health/add',
+    url: '/health',
     method: 'post',
     data
   })
@@ -66,7 +71,7 @@ export const addHealthRecord = (data) => {
 // 更新健康档案
 export const updateHealthRecord = (data) => {
   return request({
-    url: '/health/update',
+    url: '/health',
     method: 'put',
     data
   })
@@ -75,7 +80,7 @@ export const updateHealthRecord = (data) => {
 // 获取健康档案详情
 export const getHealthRecordDetail = (id) => {
   return request({
-    url: `/health/detail/${id}`,
+    url: `/health/${id}`,
     method: 'get'
   })
 }
@@ -87,6 +92,27 @@ export const getResidentHistory = (params) => {
     url: '/resident/history',
     method: 'get',
     params
+  })
+}
+
+// 获取所有已登记的老人列表
+export const getAllResidents = () => {
+  return request({
+    url: '/resident/all',
+    method: 'get'
+  })
+}
+
+// 老人出院操作
+export const dischargeResident = (residentId, reason, operator) => {
+  return request({
+    url: '/resident/discharge',
+    method: 'post',
+    params: {
+      residentId,
+      reason,
+      operator
+    }
   })
 }
 
@@ -147,8 +173,6 @@ export const addHeartRateRecord = (data) => {
     data
   })
 }
-
-
 
 // 获取健康预警
 export const getHealthAlerts = (params) => {

@@ -61,3 +61,11 @@ export function deleteBed(bedId) {
     params: { id: bedId }
   })
 }
+
+// 修复重复的resident_id问题
+export function fixDuplicateResident() {
+  return request({
+    url: '/beds/fix-duplicate-resident',
+    method: 'post'
+  })
+}
