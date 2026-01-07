@@ -79,7 +79,7 @@
         </div>
         <div class="sidebar-header">
           <h2 class="sidebar-title">功能菜单</h2>
-          <p class="sidebar-subtitle">管理所有系统功能</p>
+          
         </div>
         
         <div class="sidebar-menu">
@@ -128,26 +128,28 @@
               <el-icon><Document /></el-icon>
               <span>健康档案</span>
             </div>
-            <div class="menu-item has-submenu" :class="{ active: $route.path.includes('/health-monitoring') }">
-              <div class="menu-item-main" @click="navigateTo('/health-monitoring/daily')">
-                <el-icon><Monitor /></el-icon>
-                <span>健康监测</span>
+            <div 
+              class="menu-item" 
+              :class="{ active: $route.path.includes('/health-monitoring') }"
+              @click="navigateTo('/health-monitoring/daily')"
+            >
+              <el-icon><Monitor /></el-icon>
+              <span>健康监测</span>
+            </div>
+            <div class="submenu-vertical">
+              <div 
+                class="submenu-item" 
+                :class="{ active: $route.path === '/health-monitoring/daily' }"
+                @click="navigateTo('/health-monitoring/daily')"
+              >
+                <span>日常数据录入</span>
               </div>
-              <div class="submenu">
-                <div 
-                  class="submenu-item" 
-                  :class="{ active: $route.path === '/health-monitoring/daily' }"
-                  @click="navigateTo('/health-monitoring/daily')"
-                >
-                  日常数据录入
-                </div>
-                <div 
-                  class="submenu-item" 
-                  :class="{ active: $route.path === '/health-monitoring/visualization' }"
-                  @click="navigateTo('/health-monitoring/visualization')"
-                >
-                  可视化监测数据图
-                </div>
+              <div 
+                class="submenu-item" 
+                :class="{ active: $route.path === '/health-monitoring/visualization' }"
+                @click="navigateTo('/health-monitoring/visualization')"
+              >
+                <span>可视化监测数据图</span>
               </div>
             </div>
             <div 
@@ -576,22 +578,45 @@ const toggleSidebarPin = () => {
   overflow: visible;
 }
 
-.sidebar-menu::-webkit-scrollbar {
-  width: 6px;
+/* 垂直子菜单样式 */
+.submenu-vertical {
+  margin-left: 32px;
+  margin-top: 4px;
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.sidebar-menu::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
-  border-radius: 3px;
+.submenu-vertical .submenu-item {
+  padding: 8px 12px;
+  color: #4a4a4a;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+  min-width: 180px;
+  text-align: left;
+  border-radius: 8px;
+  margin: 0;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.sidebar-menu::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 3px;
+.submenu-vertical .submenu-item:hover {
+  background: var(--bg-hover);
+  color: var(--primary-color);
+  font-weight: 500;
 }
 
-.sidebar-menu::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+.submenu-vertical .submenu-item.active {
+  background: var(--bg-hover);
+  color: var(--primary-color);
+  font-weight: 600;
 }
 
 .sidebar.sidebar-expanded .sidebar-menu {
