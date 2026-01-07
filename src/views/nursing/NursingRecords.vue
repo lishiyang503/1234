@@ -26,16 +26,6 @@
               class="search-input"
               @keyup.enter="handleSearch"
             />
-            <el-date-picker
-              v-model="searchParams.dateRange"
-              type="daterange"
-              range-separator="至"
-              start-placeholder="开始日期"
-              end-placeholder="结束日期"
-              format="YYYY-MM-DD"
-              value-format="YYYY-MM-DD"
-              class="date-filter"
-            />
             <el-select
               v-model="searchParams.completed"
               placeholder="筛选完成状态"
@@ -229,10 +219,9 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getNursingRecords, addNursingRecord, updateNursingRecord, deleteNursingRecord } from '@/api/nursing'
 
-// 搜索和筛选参数
+// 搜索参数
 const searchParams = reactive({
   residentName: '',
-  dateRange: null,
   completed: ''
 })
 

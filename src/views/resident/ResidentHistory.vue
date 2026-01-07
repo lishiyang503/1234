@@ -28,46 +28,66 @@
               clearable
               class="search-input"
             />
-            <el-date-picker
-              v-model="searchParams.dateRange"
-              type="daterange"
-              range-separator="至"
-              start-placeholder="开始日期"
-              end-placeholder="结束日期"
-              format="YYYY-MM-DD"
-              value-format="YYYY-MM-DD"
-              class="date-picker"
-            />
             <el-button type="primary" @click="handleSearch">
               <el-icon><Search /></el-icon>
               搜索
             </el-button>
           </div>
           
-          <!-- 入住历史表格 -->
-          <div class="table-container">
-            <el-table
-              :data="residentHistoryList"
-              border
-              stripe
-              style="width: 100%"
-              :row-class-name="tableRowClassName"
-            >
-              <el-table-column prop="id" label="ID" width="80" align="center" />
-              <el-table-column prop="residentName" label="老人姓名" width="150" />
-              <el-table-column prop="roomNumber" label="房间号" width="120" align="center" />
-              <el-table-column prop="bedNumber" label="床位号" width="120" align="center" />
-              <el-table-column prop="entryDate" label="入住日期" width="150" align="center" />
-              <el-table-column prop="exitDate" label="退房日期" width="150" align="center" />
-              <el-table-column prop="duration" label="入住时长" width="120" align="center">
-                <template #default="scope">
-                  {{ scope.row.duration }}天
-                </template>
-              </el-table-column>
-              <el-table-column prop="reason" label="退房原因" min-width="200" />
-              <el-table-column prop="operator" label="操作人" width="120" align="center" />
-              <el-table-column prop="createTime" label="记录时间" width="180" align="center" />
-            </el-table>
+          <!-- 入住历史时间轴 -->
+          <div class="timeline-container">
+            <el-timeline v-if="residentHistoryList.length > 0">
+              <el-timeline-item
+                v-for="item in residentHistoryList"
+                :key="item.id"
+                :timestamp="formatDate(item.entryDate)"
+                type="success"
+                size="large"
+              >
+                <el-card class="timeline-card">
+                  <div class="timeline-content">
+                    <div class="timeline-header">
+                      <h4 class="resident-name">{{ item.residentName }}</h4>
+                      <div class="room-info">
+                        <span class="room-number">房间 {{ item.roomNumber }}</span>
+                        <span class="bed-number">床位 {{ item.bedNumber }}</span>
+                      </div>
+                    </div>
+                    <div class="timeline-body">
+                      <div class="event-info">
+                        <div class="event-item">
+                          <span class="event-label">入住时间：</span>
+                          <span class="event-value">{{ formatDate(item.entryDate) }}</span>
+                        </div>
+                        <div class="event-item" v-if="item.exitDate">
+                          <span class="event-label">退房时间：</span>
+                          <span class="event-value">{{ formatDate(item.exitDate) }}</span>
+                        </div>
+                        <div class="event-item">
+                          <span class="event-label">入住时长：</span>
+                          <span class="event-value">{{ item.duration }}天</span>
+                        </div>
+                        <div class="event-item" v-if="item.reason">
+                          <span class="event-label">退房原因：</span>
+                          <span class="event-value">{{ item.reason }}</span>
+                        </div>
+                        <div class="event-item" v-if="item.careLevel">
+                          <span class="event-label">护理级别：</span>
+                          <span class="event-value">{{ item.careLevel }}</span>
+                        </div>
+                        <div class="event-item">
+                          <span class="event-label">操作人：</span>
+                          <span class="event-value">{{ item.operator }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </el-card>
+              </el-timeline-item>
+            </el-timeline>
+            <div v-else class="empty-state">
+              <el-empty description="暂无入住历史记录" />
+            </div>
           </div>
           
           <!-- 分页 -->
@@ -95,8 +115,7 @@ import { getResidentHistory } from '@/api/resident'
 // 搜索和筛选参数
 const searchParams = reactive({
   name: '',
-  bedNumber: '',
-  dateRange: []
+  bedNumber: ''
 })
 
 // 表格数据
@@ -105,6 +124,13 @@ const total = ref(0)
 const currentPage = ref(1)
 const pageSize = ref(10)
 const loading = ref(false)
+
+// 时间格式化函数
+const formatDate = (date) => {
+  if (!date) return ''
+  const d = new Date(date)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
 
 // 生命周期
 onMounted(() => {
@@ -242,5 +268,131 @@ const tableRowClassName = ({ row, rowIndex }) => {
 
 .odd-row {
   background-color: var(--bg-secondary);
+}
+
+/* 时间轴样式 */
+.timeline-container {
+  margin-bottom: 24px;
+}
+
+.timeline-card {
+  border-radius: var(--border-radius);
+  box-shadow: none;
+  border: 1px solid var(--border-color);
+  margin-bottom: 24px;
+}
+
+.timeline-content {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+.timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.resident-name {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.room-info {
+  display: flex;
+  gap: 16px;
+}
+
+.room-number, .bed-number {
+  font-size: 15px;
+  color: var(--text-secondary);
+}
+
+.timeline-body {
+  margin-top: 16px;
+}
+
+.event-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.event-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.event-label {
+  font-weight: 500;
+  color: var(--text-primary);
+  min-width: 100px;
+  flex-shrink: 0;
+}
+
+.event-value {
+  color: var(--text-secondary);
+  flex: 1;
+}
+
+/* 老年友好设计调整 */
+:deep(.el-timeline-item__timestamp) {
+  font-size: 16px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+:deep(.el-timeline-item__node) {
+  width: 16px;
+  height: 16px;
+}
+
+:deep(.el-card__body) {
+  padding: 20px;
+}
+
+.empty-state {
+  margin: 40px 0;
+  text-align: center;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .timeline-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .room-info {
+    gap: 12px;
+  }
+  
+  .event-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .event-label {
+    min-width: unset;
+  }
+  
+  .search-filter {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .search-input,
+  .date-picker {
+    width: 100%;
+  }
 }
 </style>

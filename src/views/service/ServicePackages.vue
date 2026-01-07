@@ -73,7 +73,16 @@
                 <!-- 卡片内容 -->
                 <div class="package-card-content">
                   <div class="package-name-section">
-                    <h3 class="package-name">{{ pkg.name }}</h3>
+                    <div class="name-with-tag">
+                      <h3 class="package-name">{{ pkg.name }}</h3>
+                      <el-tag 
+                        v-if="pkg.level === '基础'" 
+                        size="small" 
+                        class="recommend-tag"
+                      >
+                        推荐
+                      </el-tag>
+                    </div>
                     <div class="package-price">
                       <el-icon><Money /></el-icon>
                       <span class="price">¥{{ pkg.price }}/月</span>
@@ -94,7 +103,12 @@
                       <span>服务内容</span>
                     </div>
                     <div class="features-content">
-                      {{ pkg.features }}
+                      <span v-if="Array.isArray(pkg.features)" class="feature-tag">
+                        {{ pkg.features.join(' · ') }}
+                      </span>
+                      <span v-else class="feature-tag">
+                        {{ pkg.features }}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -306,6 +320,20 @@ const getLevelType = (level) => {
   }
 }
 
+// 获取服务套餐级别排序值
+const getLevelValue = (level) => {
+  switch (level) {
+    case '基础':
+      return 1
+    case '中级':
+      return 2
+    case '高级':
+      return 3
+    default:
+      return 999
+  }
+}
+
 // 获取服务套餐列表
 const fetchServicePackages = async () => {
   loading.value = true
@@ -317,7 +345,17 @@ const fetchServicePackages = async () => {
     })
     
     if (response.data.success) {
-      servicePackagesList.value = response.data.data.list || []
+      // 按套餐级别排序，基础套餐在前
+      const packages = response.data.data.list || []
+      packages.sort((a, b) => {
+        const levelDiff = getLevelValue(a.level) - getLevelValue(b.level)
+        if (levelDiff !== 0) {
+          return levelDiff
+        }
+        // 级别相同时按价格排序
+        return a.price - b.price
+      })
+      servicePackagesList.value = packages
       total.value = response.data.data.total || 0
     } else {
       ElMessage.error(response.data.message || '获取服务套餐列表失败')
@@ -668,12 +706,31 @@ const handleDelete = (id) => {
   font-size: 20px;
 }
 
+/* 名称和标签容器 */
+.name-with-tag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+/* 推荐标签 */
+.recommend-tag {
+  background-color: #e6f0ff;
+  color: #409eff;
+  border-color: #d9ecff;
+  font-size: 12px;
+  padding: 2px 10px;
+  border-radius: 12px;
+}
+
 /* 描述部分 */
 .description-section {
-  background: #f8f9ff;
   padding: 16px;
   border-radius: 8px;
-  border-left: 3px solid #667eea;
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 16px;
 }
 
 .description-title {
@@ -681,15 +738,16 @@ const handleDelete = (id) => {
   align-items: center;
   gap: 8px;
   font-weight: 600;
-  color: #667eea;
+  color: var(--text-primary);
   margin-bottom: 10px;
+  font-size: 16px;
 }
 
 .description-text {
-  font-size: 14px;
-  color: #606266;
-  line-height: 1.5;
-  max-height: 80px;
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-height: 100px;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
@@ -699,10 +757,8 @@ const handleDelete = (id) => {
 
 /* 服务内容部分 */
 .features-section {
-  background: #f0f9eb;
   padding: 16px;
   border-radius: 8px;
-  border-left: 3px solid #67c23a;
 }
 
 .features-title {
@@ -710,25 +766,40 @@ const handleDelete = (id) => {
   align-items: center;
   gap: 8px;
   font-weight: 600;
-  color: #67c23a;
+  color: var(--text-primary);
   margin-bottom: 10px;
+  font-size: 16px;
 }
 
 .features-content {
-  font-size: 14px;
-  line-height: 1.8;
-  color: #606266;
-  white-space: pre-wrap;
-  word-break: break-word;
-  font-weight: 500;
-  background: white;
-  padding: 12px;
-  border-radius: 6px;
-  border: 1px solid #e4e7ed;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  min-height: 120px;
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.6;
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 80px;
+  align-items: flex-start;
+  padding: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+
+.feature-tag {
+  background-color: #f5f7fa;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 14px;
+  border: 1px solid #ebeef5;
+  color: var(--text-secondary);
+  transition: all 0.3s ease;
+}
+
+.feature-tag:hover {
+  background-color: #e6f0ff;
+  border-color: #d9ecff;
+  color: #409eff;
 }
 
 /* 卡片底部 */
