@@ -67,10 +67,16 @@
       <!-- 左侧侧边栏 -->
       <div 
         class="sidebar" 
-        :class="{ 'sidebar-expanded': isSidebarHovered }"
+        :class="{ 
+          'sidebar-expanded': isSidebarHovered || isSidebarPinned, 
+          'sidebar-pinned': isSidebarPinned 
+        }"
         @mouseenter="handleSidebarMouseEnter"
         @mouseleave="handleSidebarMouseLeave"
       >
+        <div class="sidebar-pin" :class="{ 'pinned': isSidebarPinned }" @click="toggleSidebarPin" :title="isSidebarPinned ? '取消固定' : '固定侧边栏'">
+          <div class="pin-icon"></div>
+        </div>
         <div class="sidebar-header">
           <h2 class="sidebar-title">功能菜单</h2>
           <p class="sidebar-subtitle">管理所有系统功能</p>
@@ -228,6 +234,7 @@ const username = ref('')
 const role = ref('')
 const greeting = ref('')
 const isSidebarHovered = ref(false)
+const isSidebarPinned = ref(false)
 
 // 计算问候语
 const getGreeting = () => {
@@ -243,6 +250,8 @@ onMounted(() => {
   // 从localStorage获取用户信息
   username.value = localStorage.getItem('username') || '管理员'
   role.value = localStorage.getItem('role') || '系统管理员'
+  // 从localStorage获取侧边栏固定状态
+  isSidebarPinned.value = localStorage.getItem('sidebarPinned') === 'true'
   // 设置问候语
   greeting.value = getGreeting()
   // 每分钟更新一次问候语
@@ -267,11 +276,19 @@ const handleLogout = () => {
 
 // 侧边栏相关函数
 const handleSidebarMouseEnter = () => {
+  if (isSidebarPinned.value) return
   isSidebarHovered.value = true
 }
 
 const handleSidebarMouseLeave = () => {
+  if (isSidebarPinned.value) return
   isSidebarHovered.value = false
+}
+
+const toggleSidebarPin = () => {
+  isSidebarPinned.value = !isSidebarPinned.value
+  // 保存状态到localStorage
+  localStorage.setItem('sidebarPinned', isSidebarPinned.value.toString())
 }
 </script>
 
@@ -478,6 +495,60 @@ const handleSidebarMouseLeave = () => {
 .sidebar.sidebar-expanded {
   width: 280px;
   padding: 24px;
+}
+
+/* 固定状态的侧边栏样式 */
+.sidebar.sidebar-pinned {
+  box-shadow: inset -1px 0 0 #dbe3ea;
+}
+
+/* Pin按钮样式 */
+.sidebar-pin {
+  position: absolute;
+  top: 20px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 101;
+}
+
+.sidebar.sidebar-expanded .sidebar-pin {
+  opacity: 0.6;
+  visibility: visible;
+}
+
+.sidebar-pin:hover {
+  opacity: 1;
+  background: #f2f6f9;
+}
+
+.sidebar-pin.pinned {
+  border-color: #b9c8d3;
+  background: #eef4f8;
+  opacity: 1;
+}
+
+/* Pin图标样式 */
+.pin-icon {
+  width: 14px;
+  height: 14px;
+  background: currentColor;
+  mask: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Cpath d=%22M12 17c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm5-6h-10l2-6 2 2 2-2 2 6z%22/%3E%3C/svg%3E') no-repeat center / contain;
+  transition: transform 0.2s ease;
+}
+
+.sidebar-pin.pinned .pin-icon {
+  transform: rotate(-45deg);
 }
 
 
