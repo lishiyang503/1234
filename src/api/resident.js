@@ -62,7 +62,7 @@ export const getHealthRecords = (params) => {
 // 添加健康档案
 export const addHealthRecord = (data) => {
   return request({
-    url: '/health',
+    url: '/health/add',
     method: 'post',
     data
   })
@@ -71,7 +71,7 @@ export const addHealthRecord = (data) => {
 // 更新健康档案
 export const updateHealthRecord = (data) => {
   return request({
-    url: '/health',
+    url: '/health/update',
     method: 'put',
     data
   })
@@ -80,7 +80,15 @@ export const updateHealthRecord = (data) => {
 // 获取健康档案详情
 export const getHealthRecordDetail = (id) => {
   return request({
-    url: `/health/${id}`,
+    url: `/health/detail/${id}`,
+    method: 'get'
+  })
+}
+
+// 根据老人ID获取健康档案
+export const getHealthRecordByResidentId = (residentId) => {
+  return request({
+    url: `/health/by-resident/${residentId}`,
     method: 'get'
   })
 }
@@ -112,6 +120,17 @@ export const dischargeResident = (residentId, reason, operator) => {
       residentId,
       reason,
       operator
+    }
+  })
+}
+
+// 根据身份证号查询老人信息
+export const getResidentByIdCard = (idCard) => {
+  return request({
+    url: '/resident/getByIdCard',
+    method: 'get',
+    params: {
+      idCard
     }
   })
 }

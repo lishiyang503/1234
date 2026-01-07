@@ -1,17 +1,17 @@
 <template>
   <div class="service-packages-container">
     <div class="page-header">
-      <h2 class="page-title">服务管理</h2>
-      <p class="page-subtitle">管理服务套餐信息</p>
+      <h2 class="page-title">护理服务管理</h2>
+      <p class="page-subtitle">管理护理级别和服务内容</p>
     </div>
     
     <div class="content-section">
       <div class="card">
         <div class="card-header">
-          <h3 class="card-title">服务套餐管理</h3>
+          <h3 class="card-title">护理级别管理</h3>
           <el-button type="primary" @click="showAddDialog">
             <el-icon><Plus /></el-icon>
-            添加套餐
+            添加护理级别
           </el-button>
         </div>
         
@@ -244,7 +244,7 @@ import {
   List,
   Calendar 
 } from '@element-plus/icons-vue'
-import { getServicePackages, addServicePackage, updateServicePackage, deleteServicePackage, updateServicePackageStatus } from '@/api/service'
+import { getNursingLevels, addNursingLevel, updateNursingLevel, deleteNursingLevel } from '@/api/nursing'
 
 // 搜索和筛选参数
 const searchParams = reactive({
@@ -306,25 +306,34 @@ const getLevelType = (level) => {
   }
 }
 
-// 获取服务套餐列表
+// 获取护理级别列表
 const fetchServicePackages = async () => {
   loading.value = true
   try {
-    const response = await getServicePackages({
+    const response = await getNursingLevels({
       ...searchParams,
       page: currentPage.value,
       pageSize: pageSize.value
     })
     
     if (response.data.success) {
-      servicePackagesList.value = response.data.data.list || []
+      // 转换护理级别数据为套餐格式
+      servicePackagesList.value = (response.data.data.list || []).map(level => ({
+        id: level.id,
+        name: level.name,
+        level: level.level === 1 ? '基础' : level.level === 2 ? '中级' : '高级',
+        price: level.baseCost,
+        description: level.description || '无描述',
+        features: [level.name + '护理服务'],
+        status: level.isActive ? '启用' : '禁用'
+      }))
       total.value = response.data.data.total || 0
     } else {
-      ElMessage.error(response.data.message || '获取服务套餐列表失败')
+      ElMessage.error(response.data.message || '获取护理级别列表失败')
     }
   } catch (error) {
-    console.error('获取服务套餐列表失败:', error)
-    ElMessage.error('获取服务套餐列表失败，请重试')
+    console.error('获取护理级别列表失败:', error)
+    ElMessage.error('获取护理级别列表失败，请重试')
   } finally {
     loading.value = false
   }
@@ -350,9 +359,12 @@ const tableRowClassName = ({ row, rowIndex }) => {
 // 状态切换
 const handleStatusChange = async (row) => {
   try {
-    const response = await updateServicePackageStatus(row.id, row.status)
+    const response = await updateNursingLevel({
+      id: row.id,
+      isActive: row.status === '启用'
+    })
     if (response.data.success) {
-      ElMessage.success(`套餐 ${row.name} 状态已更新为 ${row.status}`)
+      ElMessage.success(`护理级别 ${row.name} 状态已更新为 ${row.status}`)
     } else {
       ElMessage.error(response.data.message || '状态更新失败')
       // 恢复原状态
@@ -369,7 +381,7 @@ const handleStatusChange = async (row) => {
 // 显示添加对话框
 const showAddDialog = () => {
   isEditMode.value = false
-  dialogTitle.value = '添加服务套餐'
+  dialogTitle.value = '添加护理级别'
   resetForm()
   dialogVisible.value = true
 }
@@ -377,7 +389,7 @@ const showAddDialog = () => {
 // 显示编辑对话框
 const showEditDialog = (row) => {
   isEditMode.value = true
-  dialogTitle.value = '编辑服务套餐'
+  dialogTitle.value = '编辑护理级别'
   Object.assign(serviceForm, row)
   dialogVisible.value = true
 }
@@ -404,9 +416,19 @@ const handleSubmit = async () => {
     // 表单验证
     await serviceFormRef.value.validate()
     
+    // 转换表单数据为护理级别格式
+    const nursingLevelData = {
+      id: serviceForm.id,
+      name: serviceForm.name,
+      level: serviceForm.level === '基础' ? 1 : serviceForm.level === '中级' ? 2 : 3,
+      baseCost: serviceForm.price,
+      description: serviceForm.description,
+      isActive: serviceForm.status === '启用'
+    }
+    
     if (isEditMode.value) {
-      // 编辑服务套餐
-      const response = await updateServicePackage(serviceForm)
+      // 编辑护理级别
+      const response = await updateNursingLevel(nursingLevelData)
       if (response.data.success) {
         ElMessage.success('编辑成功')
         dialogVisible.value = false
@@ -415,8 +437,8 @@ const handleSubmit = async () => {
         ElMessage.error(response.data.message || '编辑失败')
       }
     } else {
-      // 添加服务套餐
-      const response = await addServicePackage(serviceForm)
+      // 添加护理级别
+      const response = await addNursingLevel(nursingLevelData)
       if (response.data.success) {
         ElMessage.success('添加成功')
         dialogVisible.value = false
@@ -441,7 +463,7 @@ const handleDelete = (id) => {
     type: 'warning'
   }).then(async () => {
     try {
-      const response = await deleteServicePackage(id)
+      const response = await deleteNursingLevel(id)
       if (response.data.success) {
         ElMessage.success('删除成功')
         fetchServicePackages()
