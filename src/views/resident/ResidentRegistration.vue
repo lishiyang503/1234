@@ -765,8 +765,8 @@ const handleCheckout = (id) => {
 }
 
 .page-title {
-  font-size: 28px;
-  font-weight: 700;
+  font-size: 20px;
+  font-weight: 600;
   margin: 0 0 8px 0;
   color: var(--text-primary);
 }
@@ -784,9 +784,9 @@ const handleCheckout = (id) => {
 }
 
 .card {
-  background: var(--gradient-card);
+  background: white;
   border-radius: var(--border-radius);
-  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
   overflow: hidden;
 }
 
@@ -838,6 +838,23 @@ const handleCheckout = (id) => {
 
 .odd-row {
   background-color: var(--bg-secondary);
+}
+
+/* 表格样式优化 */
+:deep(.el-table th) {
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  padding: 12px 0 !important;
+  background-color: var(--bg-primary) !important;
+}
+
+:deep(.el-table td) {
+  font-size: 16px !important;
+  padding: 12px 0 !important;
+}
+
+:deep(.el-table tr:hover > td) {
+  background-color: var(--bg-hover) !important;
 }
 
 .form-row {
