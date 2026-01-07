@@ -127,16 +127,16 @@
       >
         <div class="form-row">
           <el-form-item label="老人姓名" prop="residentName" class="form-item">
-            <el-input v-model="healthForm.residentName" placeholder="请输入老人姓名" />
+            <el-input v-model="healthForm.residentName" placeholder="请输入老人姓名" :disabled="true" />
           </el-form-item>
           <el-form-item label="房间号" prop="roomNumber" class="form-item">
-            <el-input v-model="healthForm.roomNumber" type="number" placeholder="请输入房间号" min="1" />
+            <el-input v-model="healthForm.roomNumber" placeholder="请输入房间号" :disabled="true" />
           </el-form-item>
         </div>
         
         <div class="form-row">
           <el-form-item label="床位号" prop="bedNumber" class="form-item">
-            <el-input v-model="healthForm.bedNumber" type="number" placeholder="请输入床位号" min="1" />
+            <el-input v-model="healthForm.bedNumber" placeholder="请输入床位号" :disabled="true" />
           </el-form-item>
           <el-form-item label="血型" prop="bloodType" class="form-item">
             <el-select v-model="healthForm.bloodType" placeholder="请选择血型" clearable>
@@ -151,10 +151,10 @@
         
         <div class="form-row">
           <el-form-item label="身高(cm)" prop="height" class="form-item">
-            <el-input v-model="healthForm.height" type="number" placeholder="请输入身高" min="50" max="250" step="0.1" />
+            <el-input v-model.number="healthForm.height" type="number" placeholder="请输入身高" min="50" max="250" step="0.1" />
           </el-form-item>
           <el-form-item label="体重(kg)" prop="weight" class="form-item">
-            <el-input v-model="healthForm.weight" type="number" placeholder="请输入体重" min="20" max="200" step="0.1" />
+            <el-input v-model.number="healthForm.weight" type="number" placeholder="请输入体重" min="20" max="200" step="0.1" />
           </el-form-item>
         </div>
         
@@ -237,8 +237,8 @@ const healthForm = reactive({
 // 表单验证规则
 const healthRules = {
   residentName: [{ required: true, message: '请输入老人姓名', trigger: 'blur' }],
-  roomNumber: [{ required: true, message: '请输入房间号', trigger: 'blur' }, { pattern: /^\d+$/, message: '房间号必须为数字', trigger: 'blur' }],
-  bedNumber: [{ required: true, message: '请输入床位号', trigger: 'blur' }, { pattern: /^\d+$/, message: '床位号必须为数字', trigger: 'blur' }],
+  roomNumber: [{ required: true, message: '请输入房间号', trigger: 'blur' }],
+  bedNumber: [{ required: true, message: '请输入床位号', trigger: 'blur' }],
   medicalHistory: [{ required: true, message: '请输入既往病史', trigger: 'blur' }],
   allergyHistory: [{ required: true, message: '请输入过敏史', trigger: 'blur' }],
   bloodType: [{ required: true, message: '请选择血型', trigger: 'change' }],
@@ -493,17 +493,21 @@ const handleSubmit = async () => {
     // 表单验证
     await healthFormRef.value.validate()
     
+    console.log('提交的健康档案数据:', healthForm)
+    
     let response
     let successMessage
     let errorMessage
     
     if (healthForm.id) {
       // 更新健康档案
+      console.log('更新健康档案，ID:', healthForm.id)
       response = await updateHealthRecord(healthForm)
       successMessage = '健康档案更新成功'
       errorMessage = '健康档案更新失败'
     } else {
       // 添加健康档案
+      console.log('添加健康档案')
       response = await addHealthRecord(healthForm)
       successMessage = '健康档案添加成功'
       errorMessage = '健康档案添加失败'
@@ -545,14 +549,15 @@ const handleSubmit = async () => {
     // 区分不同类型的错误
     if (error.response) {
       // 服务器返回了错误响应
-      const errorMsg = error.response.data?.message || error.response.statusText || '操作失败'
+      console.log('错误响应:', error.response)
+      const errorMsg = error.response.data?.message || error.response.data?.msg || error.response.statusText || '操作失败'
       ElMessage.error(`${healthForm.id ? '更新' : '添加'}健康档案失败: ${errorMsg}`)
     } else if (error.request) {
       // 请求已发送但没有收到响应
       ElMessage.error(`${healthForm.id ? '更新' : '添加'}健康档案失败: 服务器无响应`)
     } else {
       // 请求配置错误
-      ElMessage.error(`${healthForm.id ? '更新' : '添加'}健康档案失败: ${error.message}`)
+      ElMessage.error(`${healthForm.id ? '更新' : '添加'}健康档案失败: ${error.message || '未知错误'}`)
     }
   }
 }
@@ -565,7 +570,7 @@ const handleSubmit = async () => {
   height: 100%;
   padding: 20px;
   box-sizing: border-box;
-  background-color: #f5f7fa;
+  background-color: var(--bg-primary);
 }
 
 /* 页面头部 */
@@ -576,18 +581,16 @@ const handleSubmit = async () => {
 }
 
 .page-title {
-  font-size: 28px;
-  font-weight: 700;
+  font-size: 20px;
+  font-weight: 600;
   margin: 0 0 8px 0;
-  color: #303133;
-  transition: all 0.3s ease;
+  color: var(--text-primary);
 }
 
 .page-subtitle {
   font-size: 16px;
-  color: #606266;
+  color: var(--text-secondary);
   margin: 0;
-  transition: all 0.3s ease;
 }
 
 /* 内容区域 */
@@ -600,15 +603,14 @@ const handleSubmit = async () => {
 /* 卡片样式 */
 .card {
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
   overflow: hidden;
-  transition: all 0.3s ease;
 }
 
 .card:hover {
-  box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.15);
-  transform: translateY(-2px);
+  box-shadow: none;
+  transform: none;
 }
 
 .card-header {
@@ -621,10 +623,10 @@ const handleSubmit = async () => {
 }
 
 .card-title {
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 500;
   margin: 0;
-  color: #303133;
+  color: var(--text-primary);
 }
 
 .card-body {
@@ -673,11 +675,28 @@ const handleSubmit = async () => {
 
 /* 表格行样式 */
 .even-row {
-  background-color: #f5f7fa;
+  background-color: var(--bg-primary);
 }
 
 .odd-row {
   background-color: white;
+}
+
+/* 表格样式优化 */
+:deep(.el-table th) {
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  padding: 12px 0 !important;
+  background-color: var(--bg-primary) !important;
+}
+
+:deep(.el-table td) {
+  font-size: 16px !important;
+  padding: 12px 0 !important;
+}
+
+:deep(.el-table tr:hover > td) {
+  background-color: var(--bg-hover) !important;
 }
 
 /* 表单行样式 */
@@ -701,8 +720,8 @@ const handleSubmit = async () => {
 
 /* 按钮悬停效果 */
 :deep(.el-button:hover) {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transform: none;
+  box-shadow: none;
 }
 
 /* 表格加载动画 */

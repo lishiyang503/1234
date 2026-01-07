@@ -80,14 +80,6 @@
                 </template>
               </el-table-column>
               <el-table-column prop="duration" label="预计时长(分钟)" width="150" align="center" sortable />
-              <el-table-column prop="isActive" label="状态" width="100" align="center">
-                <template #default="scope">
-                  <el-switch 
-                    v-model="scope.row.isActive" 
-                    @change="handleStatusChange(scope.row)"
-                  />
-                </template>
-              </el-table-column>
               <el-table-column label="操作" width="120" align="center">
                 <template #default="scope">
                   <el-dropdown>
@@ -172,6 +164,8 @@
             <el-option label="基础护理" value="1" />
             <el-option label="中级护理" value="2" />
             <el-option label="高级护理" value="3" />
+            <el-option label="VIP" value="4" />
+            <el-option label="SVIP" value="5" />
           </el-select>
         </el-form-item>
         
@@ -184,10 +178,6 @@
             placeholder="请输入预计时长"
             style="width: 100%"
           />
-        </el-form-item>
-        
-        <el-form-item label="状态">
-          <el-switch v-model="contentForm.isActive" />
         </el-form-item>
       </el-form>
       
@@ -233,8 +223,7 @@ const contentForm = reactive({
   category: '',
   description: '',
   applicableLevels: [],
-  duration: 30,
-  isActive: true
+  duration: 30
 })
 
 // 表单验证规则
@@ -322,8 +311,7 @@ const fetchNursingContents = async () => {
       category: record.category || '',
       description: record.description || '',
       applicableLevels: record.applicableLevels || [],
-      duration: record.duration || 0,
-      isActive: record.isActive !== undefined ? record.isActive : true
+      duration: record.duration || 0
     }))
     
   } catch (error) {
@@ -388,7 +376,9 @@ const getLevelTagType = (level) => {
   const map = {
     1: 'success', // 基础护理
     2: 'warning', // 中级护理
-    3: 'danger'   // 高级护理
+    3: 'danger',  // 高级护理
+    4: 'primary', // VIP
+    5: 'info'     // SVIP
   }
   return map[level] || 'info'
 }
@@ -398,32 +388,14 @@ const getLevelText = (level) => {
   const map = {
     1: '基础护理',
     2: '中级护理',
-    3: '高级护理'
+    3: '高级护理',
+    4: 'VIP',
+    5: 'SVIP'
   }
   return map[level] || level
 }
 
-// 状态开关变化
-const handleStatusChange = async (row) => {
-  try {
-    const response = await updateNursingContent({
-      id: row.id,
-      isActive: row.isActive
-    })
-    if (response.data.success) {
-      ElMessage.success('状态更新成功')
-    } else {
-      // 恢复原状态
-      row.isActive = !row.isActive
-      ElMessage.error(response.data.message || '状态更新失败')
-    }
-  } catch (error) {
-    // 恢复原状态
-    row.isActive = !row.isActive
-    ElMessage.error('状态更新失败')
-    console.error('更新护理内容状态失败:', error)
-  }
-}
+
 
 // 重置表单
 const resetForm = () => {
@@ -436,8 +408,7 @@ const resetForm = () => {
     category: '',
     description: '',
     applicableLevels: [],
-    duration: 30,
-    isActive: true
+    duration: 30
   })
 }
 

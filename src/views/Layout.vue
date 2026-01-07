@@ -5,17 +5,50 @@
       <div class="navbar-content">
         <div class="brand-section">
           <div class="brand-logo">
-            <div class="logo-icon">🏨</div>
-            <h1 class="brand-name">颐养中心</h1>
+            <div class="logo-icon">
+              <svg width="40" height="40" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <!-- 渐变背景 -->
+                <defs>
+                  <linearGradient id="skyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#FF8C00" />
+                    <stop offset="100%" stop-color="#FFA500" />
+                  </linearGradient>
+                  <linearGradient id="sunGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#FF4500" />
+                    <stop offset="100%" stop-color="#DC143C" />
+                  </linearGradient>
+                  <linearGradient id="mountainGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#696969" />
+                    <stop offset="100%" stop-color="#808080" />
+                  </linearGradient>
+                </defs>
+                <!-- 背景 -->
+                <circle cx="50" cy="50" r="45" fill="url(#skyGradient)" />
+                <!-- 太阳光芒 -->
+                <g fill="#FFD700" stroke="#FFD700" stroke-width="2">
+                  <path d="M50 10 L50 20" />
+                  <path d="M50 80 L50 90" />
+                  <path d="M10 50 L20 50" />
+                  <path d="M80 50 L90 50" />
+                  <path d="M22 22 L32 32" />
+                  <path d="M68 68 L78 78" />
+                  <path d="M22 78 L32 68" />
+                  <path d="M68 32 L78 22" />
+                </g>
+                <!-- 像手一样的大山 -->
+                <path d="M20 80 Q35 65 50 70 Q65 65 80 80 L90 100 L10 100 Z" fill="url(#mountainGradient)" />
+                <!-- 缓缓落下的夕阳 -->
+                <circle cx="50" cy="65" r="15" fill="url(#sunGradient)" />
+              </svg>
+            </div>
+            <h1 class="brand-name">东软颐养中心</h1>
           </div>
-          <p class="brand-subtitle">养老院管理系统</p>
         </div>
         
         <div class="user-info">
           <el-avatar :size="40" src="https://api.dicebear.com/7.x/avataaars/svg?seed=admin" />
           <div class="user-details">
-            <span class="user-name">{{ username || '管理员' }}</span>
-            <span class="user-role">{{ role || '系统管理员' }}</span>
+            <span class="user-name">{{ greeting }}, {{ username || '管理员' }}</span>
           </div>
           <el-dropdown trigger="click">
             <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
@@ -32,10 +65,21 @@
     <!-- 主要内容区域 -->
     <div class="main-content">
       <!-- 左侧侧边栏 -->
-      <div class="sidebar">
+      <div 
+        class="sidebar" 
+        :class="{ 
+          'sidebar-expanded': isSidebarHovered || isSidebarPinned, 
+          'sidebar-pinned': isSidebarPinned 
+        }"
+        @mouseenter="handleSidebarMouseEnter"
+        @mouseleave="handleSidebarMouseLeave"
+      >
+        <div class="sidebar-pin" :class="{ 'pinned': isSidebarPinned }" @click="toggleSidebarPin" :title="isSidebarPinned ? '取消固定' : '固定侧边栏'">
+          <div class="pin-icon"></div>
+        </div>
         <div class="sidebar-header">
           <h2 class="sidebar-title">功能菜单</h2>
-          <p class="sidebar-subtitle">管理所有系统功能</p>
+          
         </div>
         
         <div class="sidebar-menu">
@@ -84,12 +128,17 @@
               <el-icon><Document /></el-icon>
               <span>健康档案</span>
             </div>
-            <div class="menu-item has-submenu" :class="{ active: $route.path.includes('/health-monitoring') }">
-              <div class="menu-item-main" @click="navigateTo('/health-monitoring/daily')">
+            <!-- 健康监测（可展开） -->
+            <div class="menu-item expandable" :class="{ open: healthOpen, active: $route.path.includes('/health-monitoring') }">
+              <div class="menu-item-main" @click="toggleHealth">
                 <el-icon><Monitor /></el-icon>
                 <span>健康监测</span>
+                <el-icon class="arrow">
+                  <ArrowDown />
+                </el-icon>
               </div>
-              <div class="submenu">
+
+              <div class="submenu-vertical">
                 <div 
                   class="submenu-item" 
                   :class="{ active: $route.path === '/health-monitoring/daily' }"
@@ -180,9 +229,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { ArrowDown } from '@element-plus/icons-vue'
 import FloatingNursingPanel from '@/components/FloatingNursingPanel.vue'
 import {
   House,
@@ -201,11 +251,33 @@ import {
 const router = useRouter()
 const username = ref('')
 const role = ref('')
+const greeting = ref('')
+const isSidebarHovered = ref(false)
+const isSidebarPinned = ref(false)
+const healthOpen = ref(false)
+
+// 计算问候语
+const getGreeting = () => {
+  const hour = new Date().getHours()
+  if (hour < 6) return '凌晨好'
+  if (hour < 12) return '早上好'
+  if (hour < 14) return '中午好'
+  if (hour < 18) return '下午好'
+  return '晚上好'
+}
 
 onMounted(() => {
   // 从localStorage获取用户信息
   username.value = localStorage.getItem('username') || '管理员'
   role.value = localStorage.getItem('role') || '系统管理员'
+  // 从localStorage获取侧边栏固定状态
+  isSidebarPinned.value = localStorage.getItem('sidebarPinned') === 'true'
+  // 设置问候语
+  greeting.value = getGreeting()
+  // 每分钟更新一次问候语
+  setInterval(() => {
+    greeting.value = getGreeting()
+  }, 60000)
 })
 
 const navigateTo = (path) => {
@@ -221,6 +293,39 @@ const handleLogout = () => {
   ElMessage.success('退出登录成功')
   router.push('/login')
 }
+
+// 侧边栏相关函数
+const handleSidebarMouseEnter = () => {
+  if (isSidebarPinned.value) return
+  isSidebarHovered.value = true
+}
+
+const handleSidebarMouseLeave = () => {
+  if (isSidebarPinned.value) return
+  isSidebarHovered.value = false
+}
+
+const toggleSidebarPin = () => {
+  isSidebarPinned.value = !isSidebarPinned.value
+  // 保存状态到localStorage
+  localStorage.setItem('sidebarPinned', isSidebarPinned.value.toString())
+}
+
+// 健康监测子菜单展开/收起
+const toggleHealth = () => {
+  healthOpen.value = !healthOpen.value
+}
+
+// 路由命中时自动展开健康监测
+watch(
+  () => router.currentRoute.value.path,
+  (path) => {
+    if (path.startsWith('/health-monitoring')) {
+      healthOpen.value = true
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <style scoped>
@@ -236,8 +341,8 @@ const handleLogout = () => {
 
 .top-navbar {
   height: 80px;
-  background: var(--gradient-card);
-  box-shadow: var(--shadow-sm);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
   z-index: 100;
   display: flex;
   align-items: center;
@@ -249,13 +354,17 @@ const handleLogout = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 1600px;
-  margin: 0 auto;
+  padding: 0;
 }
 
 .brand-section {
   display: flex;
   flex-direction: column;
+  margin-left: 0;
+}
+
+.user-info {
+  margin-right: 0;
 }
 
 .brand-logo {
@@ -268,17 +377,59 @@ const handleLogout = () => {
   font-size: 32px;
 }
 
+.logo-icon img {
+  width: 32px;
+  height: 32px;
+}
+
 .brand-name {
-  font-size: 24px;
-  font-weight: 700;
+  font-size: 20px;
+  font-weight: 600;
   margin: 0;
   color: var(--text-primary);
 }
 
 .brand-subtitle {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin: 0;
+  display: none;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .brand-section {
+    margin-left: 10px;
+  }
+  
+  .brand-name {
+    font-size: 18px;
+  }
+  
+  .logo-icon {
+    font-size: 28px;
+  }
+  
+  .logo-icon img {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .brand-section {
+    margin-left: 5px;
+  }
+  
+  .brand-name {
+    font-size: 16px;
+  }
+  
+  .logo-icon {
+    font-size: 24px;
+  }
+  
+  .logo-icon img {
+    width: 24px;
+    height: 24px;
+  }
 }
 
 .user-info {
@@ -300,8 +451,7 @@ const handleLogout = () => {
 }
 
 .user-role {
-  font-size: 14px;
-  color: var(--text-secondary);
+  display: none;
 }
 
 .dropdown-icon {
@@ -322,18 +472,287 @@ const handleLogout = () => {
 }
 
 .sidebar {
-  width: 280px;
-  background: var(--gradient-card);
-  box-shadow: var(--shadow-sm);
-  padding: 24px;
+  width: 60px;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  padding: 24px 8px;
   overflow-y: auto;
   position: relative;
-  z-index: 9999;
-  overflow: visible;
+  z-index: 100;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
 }
+
+/* 折叠状态：收紧整体上下空间 */
+.sidebar:not(.sidebar-expanded) {
+  padding: 6px 4px;
+}
+
+/* 折叠态：header 不占任何空间 */
+.sidebar:not(.sidebar-expanded) .sidebar-header {
+  display: none;
+}
+
+/* 折叠状态下菜单项更紧凑 */
+.sidebar:not(.sidebar-expanded) .menu-item {
+  padding: 0;
+  justify-content: center;
+  border-radius: 6px;
+  height: 40px;
+}
+
+/* 折叠态下完全隐藏菜单组标题 */
+.sidebar:not(.sidebar-expanded) .menu-section-title {
+  display: none;
+}
+
+/* 折叠态下防止submenu结构撑开menu-item */
+.sidebar:not(.sidebar-expanded) .menu-item.has-submenu {
+  margin-bottom: 0;
+}
+
+/* 折叠态减少菜单组之间的空隙 */
+.sidebar:not(.sidebar-expanded) .menu-section {
+  margin-bottom: 4px;
+}
+
+/* 折叠态 hover 不要"跳太大" */
+.sidebar:not(.sidebar-expanded) .menu-item:hover {
+  background-color: #f3f6f8;
+}
+
+/* 折叠态 active 不要左边框（会显胖） */
+.sidebar:not(.sidebar-expanded) .menu-item.active {
+  border-left: none;
+  background-color: #e9f2fb;
+}
+
+.sidebar.sidebar-expanded {
+  width: 280px;
+  padding: 24px;
+}
+
+/* 固定状态的侧边栏样式 */
+.sidebar.sidebar-pinned {
+  box-shadow: inset -1px 0 0 #dbe3ea;
+}
+
+/* Pin按钮样式 */
+.sidebar-pin {
+  position: absolute;
+  top: 20px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 101;
+}
+
+.sidebar.sidebar-expanded .sidebar-pin {
+  opacity: 0.6;
+  visibility: visible;
+}
+
+.sidebar-pin:hover {
+  opacity: 1;
+  background: #f2f6f9;
+}
+
+.sidebar-pin.pinned {
+  border-color: #b9c8d3;
+  background: #eef4f8;
+  opacity: 1;
+}
+
+/* Pin图标样式 */
+.pin-icon {
+  width: 14px;
+  height: 14px;
+  background: currentColor;
+  mask: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Cpath d=%22M12 17c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm5-6h-10l2-6 2 2 2-2 2 6z%22/%3E%3C/svg%3E') no-repeat center / contain;
+  transition: transform 0.2s ease;
+}
+
+.sidebar-pin.pinned .pin-icon {
+  transform: rotate(-45deg);
+}
+
+
 
 .sidebar-header {
   margin-bottom: 32px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.sidebar.sidebar-expanded .sidebar-header {
+  opacity: 1;
+  visibility: visible;
+}
+
+.sidebar-menu {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+  overflow: visible;
+}
+
+/* 垂直子菜单样式 */
+/* 可展开菜单项样式 */
+.menu-item.expandable {
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.menu-item.expandable .menu-item-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.menu-item.expandable .menu-item-main:hover {
+  background-color: var(--bg-hover);
+  color: var(--primary-color);
+}
+
+.menu-item.expandable .arrow {
+  margin-left: auto;
+  font-size: 14px;
+  color: #9aa4af;
+  transition: transform 0.25s ease;
+}
+
+.menu-item.expandable.open .arrow {
+  transform: rotate(180deg);
+}
+
+/* 垂直子菜单样式 */
+.submenu-vertical {
+  padding-left: 44px;
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.menu-item.expandable.open .submenu-vertical {
+  max-height: 200px;
+}
+
+.submenu-vertical .submenu-item {
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #6b7280;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+  min-width: 180px;
+  text-align: left;
+  margin: 0;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.submenu-vertical .submenu-item:hover {
+  background: #f5f7fa;
+  color: #409eff;
+}
+
+.submenu-vertical .submenu-item.active {
+  background: #ecf5ff;
+  color: #409eff;
+  font-weight: 600;
+}
+
+/* 折叠态下不显示子菜单 */
+.sidebar:not(.sidebar-expanded) .submenu-vertical {
+  display: none;
+}
+
+.sidebar.sidebar-expanded .sidebar-menu {
+  padding-right: 0;
+}
+
+.menu-section-title {
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.sidebar.sidebar-expanded .menu-section-title {
+  opacity: 1;
+  visibility: visible;
+}
+
+.menu-item span {
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  width: 0;
+  overflow: hidden;
+}
+
+.sidebar.sidebar-expanded .menu-item span {
+  opacity: 1;
+  visibility: visible;
+  width: auto;
+  overflow: visible;
+}
+
+.menu-item-main span {
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  width: 0;
+  overflow: hidden;
+}
+
+.sidebar.sidebar-expanded .menu-item-main span {
+  opacity: 1;
+  visibility: visible;
+  width: auto;
+  overflow: visible;
+}
+
+.submenu {
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.sidebar.sidebar-expanded .menu-item.has-submenu:hover .submenu {
+  opacity: 1;
+  visibility: visible;
 }
 
 .sidebar-title {
@@ -349,16 +768,10 @@ const handleLogout = () => {
   margin: 0;
 }
 
-.sidebar-menu {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
 .menu-section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
 .menu-section-title {
@@ -373,29 +786,27 @@ const handleLogout = () => {
 .menu-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
+  gap: 8px;
+  padding: 8px 12px;
   border-radius: var(--border-radius-sm);
   cursor: pointer;
   transition: all 0.3s ease;
   color: #606266;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
 }
 
 .menu-item:hover {
-  background-color: #f5f7fa;
-  color: #409eff;
-  transform: translateX(4px);
-  font-weight: 600;
+  background-color: var(--bg-hover);
+  color: var(--primary-color);
+  font-weight: 500;
 }
 
 .menu-item.active {
-  background-color: #ecf5ff;
-  color: #409eff;
+  background-color: var(--bg-hover);
+  color: var(--primary-color);
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.15);
-  border-left: 3px solid #409eff;
+  border-left: 3px solid var(--primary-color);
 }
 
 .menu-item el-icon {
@@ -412,29 +823,27 @@ const handleLogout = () => {
 .menu-item-main {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
+  gap: 8px;
+  padding: 8px 12px;
   border-radius: var(--border-radius-sm);
   transition: all 0.3s ease;
   color: #606266;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
   width: 100%;
 }
 
 .menu-item.has-submenu:hover .menu-item-main {
-  background-color: #f5f7fa;
-  color: #409eff;
-  transform: translateX(4px);
-  font-weight: 600;
+  background-color: var(--bg-hover);
+  color: var(--primary-color);
+  font-weight: 500;
 }
 
 .menu-item.has-submenu.active .menu-item-main {
-  background-color: #ecf5ff;
-  color: #409eff;
+  background-color: var(--bg-hover);
+  color: var(--primary-color);
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.15);
-  border-left: 3px solid #409eff;
+  border-left: 3px solid var(--primary-color);
 }
 
 .submenu {
@@ -442,18 +851,16 @@ const handleLogout = () => {
   left: 100%;
   top: 0;
   min-width: 220px;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
   padding: 12px 0;
   margin-left: 12px;
   opacity: 0;
   visibility: hidden;
-  transform: translateX(-12px) scale(0.95);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateX(-12px);
+  transition: all 0.3s ease;
   z-index: 9999;
-  border: 1px solid rgba(228, 231, 237, 0.8);
-  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-color);
 }
 
 /* 子菜单箭头 */
@@ -464,13 +871,11 @@ const handleLogout = () => {
   top: 20px;
   width: 12px;
   height: 12px;
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(228, 231, 237, 0.8);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-top: none;
   border-right: none;
   transform: rotate(-45deg);
-  backdrop-filter: blur(8px);
-  box-shadow: -2px 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 /* 确保子菜单在屏幕内显示 */
@@ -525,31 +930,27 @@ const handleLogout = () => {
 }
 
 .submenu-item:hover {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  color: #2563eb;
-  font-weight: 600;
-  transform: translateX(4px);
-  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.12);
+  background: var(--bg-hover);
+  color: var(--primary-color);
+  font-weight: 500;
 }
 
 .submenu-item:hover::before {
   opacity: 1;
   transform: scale(1);
-  background: #2563eb;
+  background: var(--primary-color);
 }
 
 .submenu-item.active {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  color: #2563eb;
+  background: var(--bg-hover);
+  color: var(--primary-color);
   font-weight: 600;
-  transform: translateX(4px);
-  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.15);
 }
 
 .submenu-item.active::before {
   opacity: 1;
   transform: scale(1);
-  background: #2563eb;
+  background: var(--primary-color);
 }
 
 /* 响应式调整 */
@@ -566,59 +967,7 @@ const handleLogout = () => {
   }
 }
 
-/* 现代化菜单动画效果 */
-.menu-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  color: #606266;
-  font-size: 15px;
-  font-weight: 500;
-  position: relative;
-}
 
-.menu-item:hover {
-  background-color: #f5f7fa;
-  color: #409eff;
-  font-weight: 600;
-}
-
-.menu-item.active {
-  background-color: #ecf5ff;
-  color: #409eff;
-  font-weight: 600;
-}
-
-/* 子菜单主项样式 */
-.menu-item-main {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-  color: #606266;
-  font-size: 15px;
-  font-weight: 500;
-  width: 100%;
-  cursor: pointer;
-}
-
-.menu-item.has-submenu:hover .menu-item-main {
-  background-color: #f5f7fa;
-  color: #409eff;
-  font-weight: 600;
-}
-
-.menu-item.has-submenu.active .menu-item-main {
-  background-color: #ecf5ff;
-  color: #409eff;
-  font-weight: 600;
-}
 
 .content-area {
   flex: 1;

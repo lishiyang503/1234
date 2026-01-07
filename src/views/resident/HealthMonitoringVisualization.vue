@@ -179,7 +179,7 @@ const fetchBloodPressureData = async () => {
   const response = await getBloodPressureRecords({ residentId: filterForm.residentId })
   if (response.data.success) {
     return (response.data.data || [])
-      .filter(item => item.residentId === filterForm.residentId)
+      .filter(item => item.residentId == filterForm.residentId)
       .map(item => ({
         date: item.measureTime,
         systolic: item.systolic,
@@ -194,7 +194,7 @@ const fetchBloodSugarData = async () => {
   const response = await getBloodSugarRecords({ residentId: filterForm.residentId })
   if (response.data.success) {
     return (response.data.data || [])
-      .filter(item => item.residentId === filterForm.residentId)
+      .filter(item => item.residentId == filterForm.residentId)
       .map(item => ({
         date: item.measureTime,
         level: item.level,
@@ -209,7 +209,7 @@ const fetchHeartRateData = async () => {
   const response = await getHeartRateRecords({ residentId: filterForm.residentId })
   if (response.data.success) {
     return (response.data.data || [])
-      .filter(item => item.residentId === filterForm.residentId)
+      .filter(item => item.residentId == filterForm.residentId)
       .map(item => ({
         date: item.measureTime,
         rate: item.rate

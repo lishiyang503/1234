@@ -209,7 +209,7 @@
       </div>
       
       <div class="login-footer">
-        <p>&copy; 2026 东软颐养中心. 保留所有权利.</p>
+        <p>技术支持：×××单位</p>
       </div>
     </div>
   </div>
@@ -455,29 +455,17 @@ const handleElderRegister = async () => {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, var(--primary-lighter) 0%, var(--bg-primary) 100%);
+  background: var(--bg-primary);
   padding: 20px;
 }
 
 .login-card {
   width: 100%;
   max-width: 420px;
-  background: var(--gradient-card);
+  background: var(--bg-secondary);
   border-radius: var(--border-radius);
-  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-color);
   padding: 40px 32px;
-  animation: slideUp 0.6s ease-out;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .login-header {
@@ -486,14 +474,14 @@ const handleElderRegister = async () => {
 }
 
 .login-header h2 {
-  font-size: 28px;
-  font-weight: 700;
+  font-size: 20px;
+  font-weight: 600;
   color: var(--text-primary);
   margin: 0 0 16px 0;
 }
 
 .login-header p {
-  font-size: 16px;
+  font-size: 14px;
   color: var(--text-secondary);
   margin: 0;
 }
@@ -525,34 +513,17 @@ const handleElderRegister = async () => {
   width: 100%;
 }
 
-.input-custom {
-  border-radius: var(--border-radius-sm);
-  border: 2px solid var(--border-color);
-  transition: all 0.3s ease;
-}
-
-.input-custom:focus-within,
-.input-custom.input-focus {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(138, 79, 255, 0.1);
-}
-
 .form-actions {
   margin-bottom: 24px;
 }
 
 .btn-login {
   width: 100%;
-  height: 48px;
+  height: 40px;
   font-size: 16px;
-  font-weight: 600;
-  border-radius: var(--border-radius-sm);
-  transition: all 0.3s ease;
-}
-
-.btn-login:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  font-weight: 500;
+  border-radius: var(--border-radius);
+  transition: all 0.2s ease;
 }
 
 .login-footer {
@@ -561,7 +532,7 @@ const handleElderRegister = async () => {
 
 .login-footer p {
   font-size: 14px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   margin: 0;
 }
 </style>

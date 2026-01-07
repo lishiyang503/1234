@@ -779,7 +779,7 @@ const formatDate = (date) => {
   border-radius: var(--border-radius);
   padding: 24px;
   margin-bottom: 30px;
-  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -796,7 +796,7 @@ const formatDate = (date) => {
 }
 
 .search-input :deep(.el-input__wrapper) {
-  border-radius: 50px;
+  border-radius: var(--border-radius);
   border: 1px solid var(--border-color);
   box-shadow: none;
   transition: all 0.3s ease;
@@ -822,28 +822,29 @@ const formatDate = (date) => {
 }
 
 .filter-select :deep(.el-select__wrapper) {
-  border-radius: 50px;
+  border-radius: var(--border-radius);
   border: 1px solid var(--border-color);
   box-shadow: none;
 }
 
 .reset-btn {
-  border-radius: 50px;
+  border-radius: var(--border-radius);
   padding: 10px 20px;
 }
 
 .add-btn {
-  background: var(--gradient-primary);
+  background: var(--primary-color);
   border: none;
-  border-radius: 50px;
+  border-radius: var(--border-radius);
   padding: 12px 28px;
   font-weight: 600;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .add-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(138, 79, 255, 0.3);
+  background: var(--primary-dark);
+  transform: none;
+  box-shadow: none;
 }
 
 /* 房间网格 */
@@ -856,7 +857,7 @@ const formatDate = (date) => {
 
 /* 添加房间卡片 */
 .add-room-card {
-  background: var(--gradient-card);
+  background: white;
   border: 2px dashed var(--primary-light);
   border-radius: var(--border-radius);
   padding: 40px 20px;
@@ -871,8 +872,8 @@ const formatDate = (date) => {
 
 .add-room-card:hover {
   border-color: var(--primary-color);
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-md);
+  transform: none;
+  box-shadow: none;
 }
 
 .add-icon {
@@ -902,20 +903,20 @@ const formatDate = (date) => {
   background: white;
   border-radius: var(--border-radius);
   padding: 24px;
-  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
   transition: all 0.3s ease;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   min-height: 240px;
-  border: 2px solid transparent;
   position: relative;
   overflow: hidden;
 }
 
 .room-card:hover {
-  transform: translateY(-6px);
-  box-shadow: var(--shadow-lg);
+  transform: none;
+  box-shadow: none;
+  border-color: var(--primary-light);
 }
 
 .room-card::before {
@@ -957,8 +958,8 @@ const formatDate = (date) => {
 .room-icon {
   width: 48px;
   height: 48px;
-  background: var(--primary-lighter);
-  border-radius: 12px;
+  background: var(--bg-hover);
+  border-radius: var(--border-radius);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -979,22 +980,22 @@ const formatDate = (date) => {
 .status-tag {
   border: none !important;
   font-weight: 600 !important;
-  border-radius: 50px !important;
+  border-radius: var(--border-radius) !important;
   padding: 6px 16px !important;
 }
 
 .tag-available {
-  background: rgba(123, 201, 80, 0.1) !important;
+  background: rgba(107, 142, 122, 0.1) !important;
   color: var(--success-color) !important;
 }
 
 .tag-occupied {
-  background: rgba(255, 183, 77, 0.1) !important;
+  background: rgba(194, 168, 107, 0.1) !important;
   color: var(--warning-color) !important;
 }
 
 .tag-repair {
-  background: rgba(255, 107, 107, 0.1) !important;
+  background: rgba(179, 106, 106, 0.1) !important;
   color: var(--danger-color) !important;
 }
 
@@ -1023,8 +1024,8 @@ const formatDate = (date) => {
 .repair-section {
   margin-top: 20px;
   padding: 16px;
-  background: rgba(255, 107, 107, 0.05);
-  border-radius: 12px;
+  background: rgba(179, 106, 106, 0.05);
+  border-radius: var(--border-radius);
   border-left: 3px solid var(--danger-color);
 }
 
@@ -1062,32 +1063,32 @@ const formatDate = (date) => {
 }
 
 .action-btn {
-  border-radius: 8px !important;
+  border-radius: var(--border-radius) !important;
   padding: 8px 16px !important;
   font-weight: 500 !important;
   border: none !important;
 }
 
 .repair-btn {
-  background: rgba(255, 107, 107, 0.1) !important;
+  background: rgba(179, 106, 106, 0.1) !important;
   color: var(--danger-color) !important;
 }
 
 .repair-btn:hover {
-  background: rgba(255, 107, 107, 0.2) !important;
+  background: rgba(179, 106, 106, 0.2) !important;
 }
 
 .complete-btn {
-  background: rgba(123, 201, 80, 0.1) !important;
+  background: rgba(107, 142, 122, 0.1) !important;
   color: var(--success-color) !important;
 }
 
 .complete-btn:hover {
-  background: rgba(123, 201, 80, 0.2) !important;
+  background: rgba(107, 142, 122, 0.2) !important;
 }
 
 .more-btn {
-  background: rgba(138, 79, 255, 0.1) !important;
+  background: rgba(91, 124, 138, 0.1) !important;
   color: var(--primary-color) !important;
   padding: 8px !important;
 }
@@ -1107,7 +1108,7 @@ const formatDate = (date) => {
   padding: 80px 20px;
   background: white;
   border-radius: var(--border-radius);
-  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
 }
 
 .empty-illustration {
@@ -1135,7 +1136,7 @@ const formatDate = (date) => {
 }
 
 .empty-btn {
-  border-radius: 50px;
+  border-radius: var(--border-radius);
   padding: 12px 32px;
   font-weight: 600;
 }
@@ -1168,7 +1169,7 @@ const formatDate = (date) => {
 /* 对话框样式 */
 .room-dialog,
 .repair-dialog {
-  border-radius: 20px !important;
+  border-radius: var(--border-radius) !important;
 }
 
 .room-dialog :deep(.el-dialog__header),
@@ -1197,7 +1198,7 @@ const formatDate = (date) => {
 .form-input :deep(.el-input__wrapper),
 .form-select :deep(.el-select__wrapper),
 .form-datepicker :deep(.el-input__wrapper) {
-  border-radius: 12px !important;
+  border-radius: var(--border-radius) !important;
   border: 1px solid var(--border-color) !important;
   box-shadow: none !important;
   transition: all 0.3s ease;
@@ -1218,13 +1219,13 @@ const formatDate = (date) => {
 
 .form-number :deep(.el-input-number__decrease),
 .form-number :deep(.el-input-number__increase) {
-  background: var(--primary-lighter) !important;
+  background: var(--bg-hover) !important;
   border: none !important;
   color: var(--primary-color) !important;
 }
 
 .form-textarea :deep(.el-textarea__inner) {
-  border-radius: 12px !important;
+  border-radius: var(--border-radius) !important;
   border: 1px solid var(--border-color) !important;
   box-shadow: none !important;
   transition: all 0.3s ease;
@@ -1248,7 +1249,7 @@ const formatDate = (date) => {
 }
 
 .cancel-btn {
-  border-radius: 12px !important;
+  border-radius: var(--border-radius) !important;
   padding: 10px 24px !important;
   border: 1px solid var(--border-color) !important;
   color: var(--text-secondary) !important;
@@ -1256,17 +1257,18 @@ const formatDate = (date) => {
 }
 
 .submit-btn {
-  border-radius: 12px !important;
+  border-radius: var(--border-radius) !important;
   padding: 10px 32px !important;
-  background: var(--gradient-primary) !important;
+  background: var(--primary-color) !important;
   border: none !important;
   font-weight: 600 !important;
-  transition: all 0.3s ease !important;
+  transition: all 0.2s ease !important;
 }
 
 .submit-btn:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 8px 20px rgba(138, 79, 255, 0.3) !important;
+  background: var(--primary-dark) !important;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 /* 响应式设计 */
