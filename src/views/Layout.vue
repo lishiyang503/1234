@@ -65,7 +65,15 @@
     <!-- 主要内容区域 -->
     <div class="main-content">
       <!-- 左侧侧边栏 -->
-      <div class="sidebar">
+      <div 
+        class="sidebar" 
+        :class="{ 'sidebar-expanded': isSidebarExpanded || isSidebarHovered }"
+        @mouseenter="handleSidebarMouseEnter"
+        @mouseleave="handleSidebarMouseLeave"
+      >
+        <div class="sidebar-toggle" @click="toggleSidebar">
+          <el-icon>{{ isSidebarExpanded ? 'ArrowLeft' : 'ArrowRight' }}</el-icon>
+        </div>
         <div class="sidebar-header">
           <h2 class="sidebar-title">功能菜单</h2>
           <p class="sidebar-subtitle">管理所有系统功能</p>
@@ -222,6 +230,8 @@ const router = useRouter()
 const username = ref('')
 const role = ref('')
 const greeting = ref('')
+const isSidebarExpanded = ref(false)
+const isSidebarHovered = ref(false)
 
 // 计算问候语
 const getGreeting = () => {
@@ -258,6 +268,19 @@ const handleLogout = () => {
   ElMessage.success('退出登录成功')
   router.push('/login')
 }
+
+// 侧边栏相关函数
+const handleSidebarMouseEnter = () => {
+  isSidebarHovered.value = true
+}
+
+const handleSidebarMouseLeave = () => {
+  isSidebarHovered.value = false
+}
+
+const toggleSidebar = () => {
+  isSidebarExpanded.value = !isSidebarExpanded.value
+}
 </script>
 
 <style scoped>
@@ -288,12 +311,17 @@ const handleLogout = () => {
   align-items: center;
   max-width: 1600px;
   margin: 0 auto;
+  padding: 0 20px;
 }
 
 .brand-section {
   display: flex;
   flex-direction: column;
-  margin-left: 20px;
+  margin-left: 0;
+}
+
+.user-info {
+  margin-right: 0;
 }
 
 .brand-logo {
@@ -401,18 +429,146 @@ const handleLogout = () => {
 }
 
 .sidebar {
-  width: 280px;
+  width: 60px;
   background: var(--bg-secondary);
   border-right: 1px solid var(--border-color);
-  padding: 24px;
+  padding: 24px 8px;
   overflow-y: auto;
   position: relative;
   z-index: 100;
-  overflow: visible;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar.sidebar-expanded {
+  width: 280px;
+  padding: 24px;
+}
+
+.sidebar-toggle {
+  position: absolute;
+  top: 50%;
+  right: -10px;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 40px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-left: none;
+  border-radius: 0 4px 4px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 101;
+  transition: all 0.3s ease;
+}
+
+.sidebar-toggle:hover {
+  background: var(--bg-hover);
+}
+
+.sidebar-toggle el-icon {
+  font-size: 14px;
+  color: var(--text-secondary);
 }
 
 .sidebar-header {
   margin-bottom: 32px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.sidebar.sidebar-expanded .sidebar-header {
+  opacity: 1;
+  visibility: visible;
+}
+
+.sidebar-menu {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  overflow: visible;
+}
+
+.sidebar-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-menu::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border-radius: 3px;
+}
+
+.sidebar-menu::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+.sidebar-menu::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+.sidebar.sidebar-expanded .sidebar-menu {
+  padding-right: 0;
+}
+
+.menu-section-title {
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.sidebar.sidebar-expanded .menu-section-title {
+  opacity: 1;
+  visibility: visible;
+}
+
+.menu-item span {
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  width: 0;
+  overflow: hidden;
+}
+
+.sidebar.sidebar-expanded .menu-item span {
+  opacity: 1;
+  visibility: visible;
+  width: auto;
+  overflow: visible;
+}
+
+.menu-item-main span {
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  width: 0;
+  overflow: hidden;
+}
+
+.sidebar.sidebar-expanded .menu-item-main span {
+  opacity: 1;
+  visibility: visible;
+  width: auto;
+  overflow: visible;
+}
+
+.submenu {
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.sidebar.sidebar-expanded .menu-item.has-submenu:hover .submenu {
+  opacity: 1;
+  visibility: visible;
 }
 
 .sidebar-title {
@@ -426,12 +582,6 @@ const handleLogout = () => {
   font-size: 14px;
   color: var(--text-secondary);
   margin: 0;
-}
-
-.sidebar-menu {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
 }
 
 .menu-section {
