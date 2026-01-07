@@ -128,28 +128,27 @@
               <el-icon><Document /></el-icon>
               <span>健康档案</span>
             </div>
-            <div 
-              class="menu-item" 
-              :class="{ active: $route.path.includes('/health-monitoring') }"
-              @click="navigateTo('/health-monitoring/daily')"
-            >
-              <el-icon><Monitor /></el-icon>
-              <span>健康监测</span>
-            </div>
-            <div class="submenu-vertical">
-              <div 
-                class="submenu-item" 
-                :class="{ active: $route.path === '/health-monitoring/daily' }"
-                @click="navigateTo('/health-monitoring/daily')"
-              >
-                <span>日常数据录入</span>
+            <div class="menu-item has-submenu" :class="{ active: $route.path.includes('/health-monitoring'), expanded: isHealthMonitoringExpanded }">
+              <div class="menu-item-main" @click="toggleHealthMonitoringSubmenu">
+                <el-icon><Monitor /></el-icon>
+                <span>健康监测</span>
+                <el-icon class="submenu-toggle-icon">{{ isHealthMonitoringExpanded ? 'ArrowUp' : 'ArrowDown' }}</el-icon>
               </div>
-              <div 
-                class="submenu-item" 
-                :class="{ active: $route.path === '/health-monitoring/visualization' }"
-                @click="navigateTo('/health-monitoring/visualization')"
-              >
-                <span>可视化监测数据图</span>
+              <div class="submenu-vertical" :class="{ expanded: isHealthMonitoringExpanded }">
+                <div 
+                  class="submenu-item" 
+                  :class="{ active: $route.path === '/health-monitoring/daily' }"
+                  @click="navigateTo('/health-monitoring/daily')"
+                >
+                  <span>日常数据录入</span>
+                </div>
+                <div 
+                  class="submenu-item" 
+                  :class="{ active: $route.path === '/health-monitoring/visualization' }"
+                  @click="navigateTo('/health-monitoring/visualization')"
+                >
+                  <span>可视化监测数据图</span>
+                </div>
               </div>
             </div>
             <div 
@@ -237,6 +236,7 @@ const role = ref('')
 const greeting = ref('')
 const isSidebarHovered = ref(false)
 const isSidebarPinned = ref(false)
+const isHealthMonitoringExpanded = ref(true)
 
 // 计算问候语
 const getGreeting = () => {
@@ -291,6 +291,10 @@ const toggleSidebarPin = () => {
   isSidebarPinned.value = !isSidebarPinned.value
   // 保存状态到localStorage
   localStorage.setItem('sidebarPinned', isSidebarPinned.value.toString())
+}
+
+const toggleHealthMonitoringSubmenu = () => {
+  isHealthMonitoringExpanded.value = !isHealthMonitoringExpanded.value
 }
 </script>
 
@@ -586,6 +590,17 @@ const toggleSidebarPin = () => {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.submenu-vertical.expanded {
+  max-height: 200px;
+  opacity: 1;
+  visibility: visible;
 }
 
 .submenu-vertical .submenu-item {
@@ -751,6 +766,13 @@ const toggleSidebarPin = () => {
   font-size: 14px;
   font-weight: 500;
   width: 100%;
+  cursor: pointer;
+  justify-content: space-between;
+}
+
+.submenu-toggle-icon {
+  font-size: 14px;
+  transition: transform 0.3s ease;
 }
 
 .menu-item.has-submenu:hover .menu-item-main {
