@@ -67,13 +67,10 @@
       <!-- 左侧侧边栏 -->
       <div 
         class="sidebar" 
-        :class="{ 'sidebar-expanded': isSidebarExpanded || isSidebarHovered }"
+        :class="{ 'sidebar-expanded': isSidebarHovered }"
         @mouseenter="handleSidebarMouseEnter"
         @mouseleave="handleSidebarMouseLeave"
       >
-        <div class="sidebar-toggle" @click="toggleSidebar">
-          <el-icon>{{ isSidebarExpanded ? 'ArrowLeft' : 'ArrowRight' }}</el-icon>
-        </div>
         <div class="sidebar-header">
           <h2 class="sidebar-title">功能菜单</h2>
           <p class="sidebar-subtitle">管理所有系统功能</p>
@@ -230,7 +227,6 @@ const router = useRouter()
 const username = ref('')
 const role = ref('')
 const greeting = ref('')
-const isSidebarExpanded = ref(false)
 const isSidebarHovered = ref(false)
 
 // 计算问候语
@@ -276,10 +272,6 @@ const handleSidebarMouseEnter = () => {
 
 const handleSidebarMouseLeave = () => {
   isSidebarHovered.value = false
-}
-
-const toggleSidebar = () => {
-  isSidebarExpanded.value = !isSidebarExpanded.value
 }
 </script>
 
@@ -439,38 +431,56 @@ const toggleSidebar = () => {
   flex-direction: column;
 }
 
+/* 折叠状态：收紧整体上下空间 */
+.sidebar:not(.sidebar-expanded) {
+  padding: 6px 4px;
+}
+
+/* 折叠态：header 不占任何空间 */
+.sidebar:not(.sidebar-expanded) .sidebar-header {
+  display: none;
+}
+
+/* 折叠状态下菜单项更紧凑 */
+.sidebar:not(.sidebar-expanded) .menu-item {
+  padding: 0;
+  justify-content: center;
+  border-radius: 6px;
+  height: 40px;
+}
+
+/* 折叠态下完全隐藏菜单组标题 */
+.sidebar:not(.sidebar-expanded) .menu-section-title {
+  display: none;
+}
+
+/* 折叠态下防止submenu结构撑开menu-item */
+.sidebar:not(.sidebar-expanded) .menu-item.has-submenu {
+  margin-bottom: 0;
+}
+
+/* 折叠态减少菜单组之间的空隙 */
+.sidebar:not(.sidebar-expanded) .menu-section {
+  margin-bottom: 4px;
+}
+
+/* 折叠态 hover 不要"跳太大" */
+.sidebar:not(.sidebar-expanded) .menu-item:hover {
+  background-color: #f3f6f8;
+}
+
+/* 折叠态 active 不要左边框（会显胖） */
+.sidebar:not(.sidebar-expanded) .menu-item.active {
+  border-left: none;
+  background-color: #e9f2fb;
+}
+
 .sidebar.sidebar-expanded {
   width: 280px;
   padding: 24px;
 }
 
-.sidebar-toggle {
-  position: absolute;
-  top: 50%;
-  right: -10px;
-  transform: translateY(-50%);
-  width: 20px;
-  height: 40px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-left: none;
-  border-radius: 0 4px 4px 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 101;
-  transition: all 0.3s ease;
-}
 
-.sidebar-toggle:hover {
-  background: var(--bg-hover);
-}
-
-.sidebar-toggle el-icon {
-  font-size: 14px;
-  color: var(--text-secondary);
-}
 
 .sidebar-header {
   margin-bottom: 32px;
@@ -490,7 +500,7 @@ const toggleSidebar = () => {
   padding-right: 8px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 4px;
   position: relative;
   overflow: visible;
 }
@@ -585,7 +595,7 @@ const toggleSidebar = () => {
 .menu-section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
 .menu-section-title {
@@ -781,59 +791,7 @@ const toggleSidebar = () => {
   }
 }
 
-/* 现代化菜单动画效果 */
-.menu-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  color: #606266;
-  font-size: 15px;
-  font-weight: 500;
-  position: relative;
-}
 
-.menu-item:hover {
-  background-color: #f5f7fa;
-  color: #409eff;
-  font-weight: 600;
-}
-
-.menu-item.active {
-  background-color: #ecf5ff;
-  color: #409eff;
-  font-weight: 600;
-}
-
-/* 子菜单主项样式 */
-.menu-item-main {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-  color: #606266;
-  font-size: 15px;
-  font-weight: 500;
-  width: 100%;
-  cursor: pointer;
-}
-
-.menu-item.has-submenu:hover .menu-item-main {
-  background-color: #f5f7fa;
-  color: #409eff;
-  font-weight: 600;
-}
-
-.menu-item.has-submenu.active .menu-item-main {
-  background-color: #ecf5ff;
-  color: #409eff;
-  font-weight: 600;
-}
 
 .content-area {
   flex: 1;
