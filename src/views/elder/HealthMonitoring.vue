@@ -2,7 +2,7 @@
   <div class="health-monitoring-container">
     <div class="page-header">
       <h2 class="page-title">每日健康指标</h2>
-      <p class="page-subtitle">实时监测和记录老人的每日健康数据</p>
+      <p class="page-subtitle">实时监测和记录我的健康数据</p>
     </div>
     
     <div class="content-section">
@@ -73,7 +73,7 @@
       <!-- 健康数据录入卡片 -->
       <div class="card">
         <div class="card-header">
-          <h3 class="card-title">健康数据录入</h3>
+          <h3 class="card-title">记录健康数据</h3>
           <el-button type="primary" @click="toggleInputForm">
             <el-icon><Edit /></el-icon>
             {{ showInputForm ? '收起录入' : '展开录入' }}
@@ -87,16 +87,6 @@
               <div class="tab-content">
                 <div class="form-container">
                   <el-form :model="bloodPressureForm" label-width="120px" class="health-form">
-                    <el-form-item label="老人姓名" required>
-                      <el-select v-model="bloodPressureForm.residentId" placeholder="请选择老人姓名" style="width: 200px;">
-                        <el-option
-                          v-for="resident in residentsList"
-                          :key="resident.id"
-                          :label="resident.name"
-                          :value="resident.id"
-                        />
-                      </el-select>
-                    </el-form-item>
                     <el-form-item label="收缩压(mmHg)" required>
                       <el-input-number v-model="bloodPressureForm.systolic" :min="60" :max="200" style="width: 150px;"></el-input-number>
                     </el-form-item>
@@ -122,16 +112,6 @@
               <div class="tab-content">
                 <div class="form-container">
                   <el-form :model="bloodSugarForm" label-width="120px" class="health-form">
-                    <el-form-item label="老人姓名" required>
-                      <el-select v-model="bloodSugarForm.residentId" placeholder="请选择老人姓名" style="width: 200px;">
-                        <el-option
-                          v-for="resident in residentsList"
-                          :key="resident.id"
-                          :label="resident.name"
-                          :value="resident.id"
-                        />
-                      </el-select>
-                    </el-form-item>
                     <el-form-item label="血糖值(mmol/L)" required>
                       <el-input-number v-model="bloodSugarForm.level" :min="2" :max="30" :step="0.1" style="width: 150px;"></el-input-number>
                     </el-form-item>
@@ -161,16 +141,6 @@
               <div class="tab-content">
                 <div class="form-container">
                   <el-form :model="heartRateForm" label-width="120px" class="health-form">
-                    <el-form-item label="老人姓名" required>
-                      <el-select v-model="heartRateForm.residentId" placeholder="请选择老人姓名" style="width: 200px;">
-                        <el-option
-                          v-for="resident in residentsList"
-                          :key="resident.id"
-                          :label="resident.name"
-                          :value="resident.id"
-                        />
-                      </el-select>
-                    </el-form-item>
                     <el-form-item label="心率值(次/分)" required>
                       <el-input-number v-model="heartRateForm.rate" :min="40" :max="200" style="width: 150px;"></el-input-number>
                     </el-form-item>
@@ -195,10 +165,6 @@
       <div class="card">
         <div class="card-header">
           <h3 class="card-title">健康数据历史记录</h3>
-          <el-button type="primary" @click="exportData">
-            <el-icon><Download /></el-icon>
-            导出数据
-          </el-button>
         </div>
         
         <div class="card-body">
@@ -261,31 +227,22 @@
         </div>
       </div>
       
-      <!-- 异常预警卡片 -->
+      <!-- 健康建议卡片 -->
       <div class="card">
         <div class="card-header">
-          <h3 class="card-title">健康异常预警</h3>
-          <el-button type="success" @click="checkAllHealthData">
-            <el-icon><Refresh /></el-icon>
-            检查所有数据
-          </el-button>
+          <h3 class="card-title">健康建议</h3>
         </div>
         
         <div class="card-body">
-          <div class="alerts-container">
-            <div v-if="healthAlerts.length === 0" class="no-alerts">
-              <el-empty description="暂无健康异常预警" />
-            </div>
+          <div class="health-tips">
             <el-alert
-              v-for="(alert, index) in healthAlerts"
+              v-for="(tip, index) in healthTips"
               :key="index"
-              :type="alert.type === 'danger' ? 'danger' : 'warning'"
-              :title="alert.title"
-              :description="alert.description"
+              :type="tip.type"
+              :title="tip.title"
+              :description="tip.description"
               show-icon
-              :closable="true"
-              @close="removeAlert(index)"
-              class="health-alert"
+              class="health-tip"
             />
           </div>
         </div>
@@ -296,26 +253,12 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { Refresh, Warning, Link, Download } from '@element-plus/icons-vue'
-// 导入健康监测相关API
-import {
-  getBloodPressureRecords,
-  addBloodPressureRecord,
-  getBloodSugarRecords,
-  addBloodSugarRecord,
-  getHeartRateRecords,
-  addHeartRateRecord,
-  getHealthAlerts,
-  getAllResidents
-} from '@/api/resident'
+import { ElMessage } from 'element-plus'
+import { Edit, Warning, Link } from '@element-plus/icons-vue'
 
 // 标签页切换
 const activeTab = ref('bloodPressure')
 const historyTab = ref('bloodPressureHistory')
-
-// 老人列表
-const residentsList = ref([])
 
 // 当前日期
 const currentDate = ref(new Date().toISOString().slice(0, 10))
@@ -340,7 +283,6 @@ const todayHeartRate = reactive({
 
 // 血压记录表单
 const bloodPressureForm = reactive({
-  residentId: '',
   systolic: 0,
   diastolic: 0,
   measureTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
@@ -349,7 +291,6 @@ const bloodPressureForm = reactive({
 
 // 血糖记录表单
 const bloodSugarForm = reactive({
-  residentId: '',
   level: 0,
   measureTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
   status: '空腹',
@@ -358,95 +299,48 @@ const bloodSugarForm = reactive({
 
 // 心率记录表单
 const heartRateForm = reactive({
-  residentId: '',
   rate: 0,
   measureTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
   notes: ''
 })
 
 // 健康记录列表
-const bloodPressureRecords = ref([])
-const bloodSugarRecords = ref([])
-const heartRateRecords = ref([])
+const bloodPressureRecords = ref([
+  { measureTime: '2026-01-06 08:00', systolic: 122, diastolic: 82, notes: '早晨测量' },
+  { measureTime: '2026-01-05 18:00', systolic: 118, diastolic: 78, notes: '晚上测量' },
+  { measureTime: '2026-01-04 08:30', systolic: 125, diastolic: 85, notes: '早晨测量' }
+])
 
-// 健康异常预警
-const healthAlerts = ref([])
+const bloodSugarRecords = ref([
+  { measureTime: '2026-01-06 07:30', level: 5.8, status: '空腹', notes: '早餐前' },
+  { measureTime: '2026-01-05 12:30', level: 7.2, status: '餐后', notes: '午餐后2小时' },
+  { measureTime: '2026-01-04 07:45', level: 5.5, status: '空腹', notes: '早餐前' }
+])
 
-// 获取血压记录
-const fetchBloodPressureRecords = async () => {
-  try {
-    const response = await getBloodPressureRecords()
-    if (response.data.success) {
-      bloodPressureRecords.value = response.data.data || []
-    } else {
-      ElMessage.error(response.data.message || '获取血压记录失败')
-    }
-  } catch (error) {
-    ElMessage.error('获取血压记录失败')
-    console.error('获取血压记录失败:', error)
+const heartRateRecords = ref([
+  { measureTime: '2026-01-06 09:00', rate: 72, notes: '平静状态' },
+  { measureTime: '2026-01-05 15:00', rate: 78, notes: '活动后' },
+  { measureTime: '2026-01-04 20:00', rate: 68, notes: '睡前' }
+])
+
+// 健康建议
+const healthTips = ref([
+  {
+    type: 'success',
+    title: '血压正常',
+    description: '您的血压在正常范围内，请继续保持良好的生活习惯。'
+  },
+  {
+    type: 'info',
+    title: '血糖稳定',
+    description: '您的血糖水平稳定，建议继续保持规律的饮食和运动。'
+  },
+  {
+    type: 'warning',
+    title: '心率正常',
+    description: '您的心率在正常范围内，建议保持适当的运动锻炼。'
   }
-}
-
-// 获取血糖记录
-const fetchBloodSugarRecords = async () => {
-  try {
-    const response = await getBloodSugarRecords()
-    if (response.data.success) {
-      bloodSugarRecords.value = response.data.data || []
-    } else {
-      ElMessage.error(response.data.message || '获取血糖记录失败')
-    }
-  } catch (error) {
-    ElMessage.error('获取血糖记录失败')
-    console.error('获取血糖记录失败:', error)
-  }
-}
-
-// 获取心率记录
-const fetchHeartRateRecords = async () => {
-  try {
-    const response = await getHeartRateRecords()
-    if (response.data.success) {
-      heartRateRecords.value = response.data.data || []
-    } else {
-      ElMessage.error(response.data.message || '获取心率记录失败')
-    }
-  } catch (error) {
-    ElMessage.error('获取心率记录失败')
-    console.error('获取心率记录失败:', error)
-  }
-}
-
-// 获取老人列表
-const fetchResidentsList = async () => {
-  try {
-    const response = await getAllResidents()
-    if (response.data.success) {
-      // 过滤出当前入住的老人
-      residentsList.value = (response.data.data || []).filter(resident => resident.status === '入住')
-    } else {
-      ElMessage.error(response.data.message || '获取老人列表失败')
-    }
-  } catch (error) {
-    ElMessage.error('获取老人列表失败')
-    console.error('获取老人列表失败:', error)
-  }
-}
-
-// 获取健康预警
-const fetchHealthAlerts = async () => {
-  try {
-    const response = await getHealthAlerts()
-    if (response.data.success) {
-      healthAlerts.value = response.data.data || []
-    } else {
-      ElMessage.error(response.data.message || '获取健康预警失败')
-    }
-  } catch (error) {
-    ElMessage.error('获取健康预警失败')
-    console.error('获取健康预警失败:', error)
-  }
-}
+])
 
 // 获取每日数据
 const fetchDailyData = () => {
@@ -458,33 +352,36 @@ const fetchDailyData = () => {
 
 // 保存血压记录
 const saveBloodPressure = async () => {
-  if (!bloodPressureForm.residentId || !bloodPressureForm.systolic || !bloodPressureForm.diastolic) {
+  if (!bloodPressureForm.systolic || !bloodPressureForm.diastolic) {
     ElMessage.warning('请填写完整的血压记录信息')
     return
   }
   
   try {
-    const response = await addBloodPressureRecord(bloodPressureForm)
-    if (response.data.success) {
-      ElMessage.success(response.data.message || '血压记录保存成功')
-      fetchBloodPressureRecords()
-      fetchHealthAlerts()
-      
-      // 更新今日数据
-      todayBloodPressure.systolic = bloodPressureForm.systolic
-      todayBloodPressure.diastolic = bloodPressureForm.diastolic
-      
-      // 重置表单
-      Object.assign(bloodPressureForm, {
-        residentId: '',
-        systolic: 0,
-        diastolic: 0,
-        measureTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
-        notes: ''
-      })
-    } else {
-      ElMessage.error(response.data.message || '血压记录保存失败')
-    }
+    // 这里应该调用API保存数据
+    console.log('保存血压记录:', bloodPressureForm)
+    
+    // 更新今日数据
+    todayBloodPressure.systolic = bloodPressureForm.systolic
+    todayBloodPressure.diastolic = bloodPressureForm.diastolic
+    
+    // 添加到历史记录
+    bloodPressureRecords.value.unshift({
+      measureTime: bloodPressureForm.measureTime,
+      systolic: bloodPressureForm.systolic,
+      diastolic: bloodPressureForm.diastolic,
+      notes: bloodPressureForm.notes
+    })
+    
+    ElMessage.success('血压记录保存成功')
+    
+    // 重置表单
+    Object.assign(bloodPressureForm, {
+      systolic: 0,
+      diastolic: 0,
+      measureTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
+      notes: ''
+    })
   } catch (error) {
     ElMessage.error('血压记录保存失败')
     console.error('保存血压记录失败:', error)
@@ -493,33 +390,36 @@ const saveBloodPressure = async () => {
 
 // 保存血糖记录
 const saveBloodSugar = async () => {
-  if (!bloodSugarForm.residentId || !bloodSugarForm.level) {
+  if (!bloodSugarForm.level) {
     ElMessage.warning('请填写完整的血糖记录信息')
     return
   }
   
   try {
-    const response = await addBloodSugarRecord(bloodSugarForm)
-    if (response.data.success) {
-      ElMessage.success(response.data.message || '血糖记录保存成功')
-      fetchBloodSugarRecords()
-      fetchHealthAlerts()
-      
-      // 更新今日数据
-      todayBloodSugar.level = bloodSugarForm.level
-      todayBloodSugar.status = bloodSugarForm.status
-      
-      // 重置表单
-      Object.assign(bloodSugarForm, {
-        residentId: '',
-        level: 0,
-        measureTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
-        status: '空腹',
-        notes: ''
-      })
-    } else {
-      ElMessage.error(response.data.message || '血糖记录保存失败')
-    }
+    // 这里应该调用API保存数据
+    console.log('保存血糖记录:', bloodSugarForm)
+    
+    // 更新今日数据
+    todayBloodSugar.level = bloodSugarForm.level
+    todayBloodSugar.status = bloodSugarForm.status
+    
+    // 添加到历史记录
+    bloodSugarRecords.value.unshift({
+      measureTime: bloodSugarForm.measureTime,
+      level: bloodSugarForm.level,
+      status: bloodSugarForm.status,
+      notes: bloodSugarForm.notes
+    })
+    
+    ElMessage.success('血糖记录保存成功')
+    
+    // 重置表单
+    Object.assign(bloodSugarForm, {
+      level: 0,
+      measureTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
+      status: '空腹',
+      notes: ''
+    })
   } catch (error) {
     ElMessage.error('血糖记录保存失败')
     console.error('保存血糖记录失败:', error)
@@ -528,31 +428,33 @@ const saveBloodSugar = async () => {
 
 // 保存心率记录
 const saveHeartRate = async () => {
-  if (!heartRateForm.residentId || !heartRateForm.rate) {
+  if (!heartRateForm.rate) {
     ElMessage.warning('请填写完整的心率记录信息')
     return
   }
   
   try {
-    const response = await addHeartRateRecord(heartRateForm)
-    if (response.data.success) {
-      ElMessage.success(response.data.message || '心率记录保存成功')
-      fetchHeartRateRecords()
-      fetchHealthAlerts()
-      
-      // 更新今日数据
-      todayHeartRate.rate = heartRateForm.rate
-      
-      // 重置表单
-      Object.assign(heartRateForm, {
-        residentId: '',
-        rate: 0,
-        measureTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
-        notes: ''
-      })
-    } else {
-      ElMessage.error(response.data.message || '心率记录保存失败')
-    }
+    // 这里应该调用API保存数据
+    console.log('保存心率记录:', heartRateForm)
+    
+    // 更新今日数据
+    todayHeartRate.rate = heartRateForm.rate
+    
+    // 添加到历史记录
+    heartRateRecords.value.unshift({
+      measureTime: heartRateForm.measureTime,
+      rate: heartRateForm.rate,
+      notes: heartRateForm.notes
+    })
+    
+    ElMessage.success('心率记录保存成功')
+    
+    // 重置表单
+    Object.assign(heartRateForm, {
+      rate: 0,
+      measureTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
+      notes: ''
+    })
   } catch (error) {
     ElMessage.error('心率记录保存失败')
     console.error('保存心率记录失败:', error)
@@ -652,39 +554,15 @@ const getHeartRateStatusClass = (row) => {
   return 'status-normal'
 }
 
-// 检查所有健康数据
-const checkAllHealthData = async () => {
-  try {
-    await fetchHealthAlerts()
-    ElMessage.success('健康数据检查完成')
-  } catch (error) {
-    ElMessage.error('健康数据检查失败')
-    console.error('检查健康数据失败:', error)
-  }
-}
-
-// 移除预警
-const removeAlert = (index) => {
-  healthAlerts.value.splice(index, 1)
-}
-
 // 切换录入表单
 const toggleInputForm = () => {
   showInputForm.value = !showInputForm.value
 }
 
-// 导出数据
-const exportData = () => {
-  ElMessage.success('数据导出功能开发中')
-}
-
 // 组件挂载时获取数据
 onMounted(() => {
-  fetchResidentsList()
-  fetchBloodPressureRecords()
-  fetchBloodSugarRecords()
-  fetchHeartRateRecords()
-  fetchHealthAlerts()
+  console.log('组件挂载')
+  // 这里可以调用API获取初始数据
 })
 </script>
 
@@ -772,21 +650,6 @@ onMounted(() => {
 }
 
 .history-tabs {
-  width: 100%;
-}
-
-.alerts-container {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.no-alerts {
-  text-align: center;
-  padding: 40px 0;
-}
-
-.health-alert {
   width: 100%;
 }
 
@@ -884,6 +747,17 @@ onMounted(() => {
   padding: 4px 12px;
   border-radius: 12px;
   display: inline-block;
+}
+
+/* 健康建议 */
+.health-tips {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.health-tip {
+  width: 100%;
 }
 
 /* 状态样式 */

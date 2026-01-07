@@ -234,6 +234,19 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowDown } from '@element-plus/icons-vue'
 import FloatingNursingPanel from '@/components/FloatingNursingPanel.vue'
+import {
+  House,
+  Food,
+  User,
+  Document,
+  Monitor,
+  Clock,
+  Service,
+  ShoppingCart,
+  List,
+  Calendar,
+  ArrowDown
+} from '@element-plus/icons-vue'
 
 const router = useRouter()
 const username = ref('')
