@@ -309,9 +309,7 @@ const toggleSidebar = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 0 20px;
+  padding: 0;
 }
 
 .brand-section {
@@ -602,13 +600,13 @@ const toggleSidebar = () => {
 .menu-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
+  gap: 8px;
+  padding: 8px 12px;
   border-radius: var(--border-radius-sm);
   cursor: pointer;
   transition: all 0.3s ease;
   color: #606266;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
 }
 
@@ -639,12 +637,12 @@ const toggleSidebar = () => {
 .menu-item-main {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
+  gap: 8px;
+  padding: 8px 12px;
   border-radius: var(--border-radius-sm);
   transition: all 0.3s ease;
   color: #606266;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
   width: 100%;
 }
