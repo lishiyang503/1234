@@ -128,26 +128,30 @@
               <el-icon><Document /></el-icon>
               <span>健康档案</span>
             </div>
-            <div class="menu-item has-submenu" :class="{ active: $route.path.includes('/health-monitoring'), expanded: isHealthMonitoringExpanded }">
-              <div class="menu-item-main" @click="toggleHealthMonitoringSubmenu">
+            <!-- 健康监测（可展开） -->
+            <div class="menu-item expandable" :class="{ open: healthOpen, active: $route.path.includes('/health-monitoring') }">
+              <div class="menu-item-main" @click="toggleHealth">
                 <el-icon><Monitor /></el-icon>
                 <span>健康监测</span>
-                <el-icon class="submenu-toggle-icon">{{ isHealthMonitoringExpanded ? 'ArrowUp' : 'ArrowDown' }}</el-icon>
+                <el-icon class="arrow">
+                  <ArrowDown />
+                </el-icon>
               </div>
-              <div class="submenu-vertical" :class="{ expanded: isHealthMonitoringExpanded }">
+
+              <div class="submenu-vertical">
                 <div 
                   class="submenu-item" 
                   :class="{ active: $route.path === '/health-monitoring/daily' }"
                   @click="navigateTo('/health-monitoring/daily')"
                 >
-                  <span>日常数据录入</span>
+                  日常数据录入
                 </div>
                 <div 
                   class="submenu-item" 
                   :class="{ active: $route.path === '/health-monitoring/visualization' }"
                   @click="navigateTo('/health-monitoring/visualization')"
                 >
-                  <span>可视化监测数据图</span>
+                  可视化监测数据图
                 </div>
               </div>
             </div>
@@ -225,9 +229,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { ArrowDown } from '@element-plus/icons-vue'
 import FloatingNursingPanel from '@/components/FloatingNursingPanel.vue'
 
 const router = useRouter()
@@ -236,7 +241,7 @@ const role = ref('')
 const greeting = ref('')
 const isSidebarHovered = ref(false)
 const isSidebarPinned = ref(false)
-const isHealthMonitoringExpanded = ref(true)
+const healthOpen = ref(false)
 
 // 计算问候语
 const getGreeting = () => {
@@ -293,9 +298,21 @@ const toggleSidebarPin = () => {
   localStorage.setItem('sidebarPinned', isSidebarPinned.value.toString())
 }
 
-const toggleHealthMonitoringSubmenu = () => {
-  isHealthMonitoringExpanded.value = !isHealthMonitoringExpanded.value
+// 健康监测子菜单展开/收起
+const toggleHealth = () => {
+  healthOpen.value = !healthOpen.value
 }
+
+// 路由命中时自动展开健康监测
+watch(
+  () => router.currentRoute.value.path,
+  (path) => {
+    if (path.startsWith('/health-monitoring')) {
+      healthOpen.value = true
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <style scoped>
@@ -583,37 +600,68 @@ const toggleHealthMonitoringSubmenu = () => {
 }
 
 /* 垂直子菜单样式 */
+/* 可展开菜单项样式 */
+.menu-item.expandable {
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.menu-item.expandable .menu-item-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.menu-item.expandable .menu-item-main:hover {
+  background-color: var(--bg-hover);
+  color: var(--primary-color);
+}
+
+.menu-item.expandable .arrow {
+  margin-left: auto;
+  font-size: 14px;
+  color: #9aa4af;
+  transition: transform 0.25s ease;
+}
+
+.menu-item.expandable.open .arrow {
+  transform: rotate(180deg);
+}
+
+/* 垂直子菜单样式 */
 .submenu-vertical {
-  margin-left: 32px;
+  padding-left: 44px;
   margin-top: 4px;
-  margin-bottom: 8px;
   display: flex;
   flex-direction: column;
   gap: 4px;
   max-height: 0;
   overflow: hidden;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.3s ease;
+  transition: max-height 0.3s ease;
 }
 
-.submenu-vertical.expanded {
+.menu-item.expandable.open .submenu-vertical {
   max-height: 200px;
-  opacity: 1;
-  visibility: visible;
 }
 
 .submenu-vertical .submenu-item {
   padding: 8px 12px;
-  color: #4a4a4a;
   font-size: 14px;
-  font-weight: 500;
+  color: #6b7280;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.25s ease;
   white-space: nowrap;
   min-width: 180px;
   text-align: left;
-  border-radius: 8px;
   margin: 0;
   position: relative;
   overflow: hidden;
@@ -623,15 +671,19 @@ const toggleHealthMonitoringSubmenu = () => {
 }
 
 .submenu-vertical .submenu-item:hover {
-  background: var(--bg-hover);
-  color: var(--primary-color);
-  font-weight: 500;
+  background: #f5f7fa;
+  color: #409eff;
 }
 
 .submenu-vertical .submenu-item.active {
-  background: var(--bg-hover);
-  color: var(--primary-color);
+  background: #ecf5ff;
+  color: #409eff;
   font-weight: 600;
+}
+
+/* 折叠态下不显示子菜单 */
+.sidebar:not(.sidebar-expanded) .submenu-vertical {
+  display: none;
 }
 
 .sidebar.sidebar-expanded .sidebar-menu {
@@ -766,13 +818,6 @@ const toggleHealthMonitoringSubmenu = () => {
   font-size: 14px;
   font-weight: 500;
   width: 100%;
-  cursor: pointer;
-  justify-content: space-between;
-}
-
-.submenu-toggle-icon {
-  font-size: 14px;
-  transition: transform 0.3s ease;
 }
 
 .menu-item.has-submenu:hover .menu-item-main {
