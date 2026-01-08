@@ -67,16 +67,13 @@
               <el-table-column prop="description" label="护理内容描述" min-width="250" />
               <el-table-column label="适用护理级别" min-width="180" align="center">
                 <template #default="scope">
-                  <div class="level-tags">
-                    <el-tag 
-                      v-for="level in scope.row.applicableLevels" 
-                      :key="level"
-                      size="small"
-                      :type="getLevelTagType(level)"
-                    >
-                      {{ getLevelText(level) }}
-                    </el-tag>
-                  </div>
+                  <el-tag 
+                    v-if="scope.row.applicableLevel"
+                    size="small"
+                    :type="getLevelTagType(scope.row.applicableLevel)"
+                  >
+                    {{ getLevelText(scope.row.applicableLevel) }}
+                  </el-tag>
                 </template>
               </el-table-column>
 
@@ -154,11 +151,11 @@
           />
         </el-form-item>
         
-        <el-form-item label="适用护理级别" prop="applicableLevels">
+        <el-form-item label="适用护理级别" prop="applicableLevel">
           <el-select 
-            v-model="contentForm.applicableLevels" 
+            v-model="contentForm.applicableLevel" 
             placeholder="请选择适用护理级别"
-            multiple
+            clearable
             style="width: 100%"
           >
             <el-option label="基础护理" value="1" />
@@ -212,8 +209,7 @@ const contentForm = reactive({
   name: '',
   category: '',
   description: '',
-  applicableLevels: [], // 前端显示用
-  applicable_level: '' // 后端提交用
+  applicableLevel: '' // 改为字符串，初始为空
 })
 
 // 表单验证规则
@@ -221,7 +217,7 @@ const contentRules = {
   name: [{ required: true, message: '请输入护理内容名称', trigger: 'blur' }],
   category: [{ required: true, message: '请选择护理类型', trigger: 'change' }],
   description: [{ required: true, message: '请输入护理内容描述', trigger: 'blur' }],
-  applicableLevels: [{ required: true, message: '请选择适用护理级别', trigger: 'change' }]
+  applicableLevel: [{ required: true, message: '请选择适用护理级别', trigger: 'change' }]
 }
 
 // 生命周期
@@ -293,36 +289,24 @@ const fetchNursingContents = async () => {
     nursingContentsList.value = nursingContentsList.value.map(record => {
       console.log('原始记录:', record)
       
-      // 处理适用护理级别，确保它是数组类型
-      let applicableLevels = []
-      
       // 【修复】兼容处理：优先尝试获取驼峰命名(常见后端返回格式)，如果不存在则尝试获取下划线命名(数据库原生格式)
-      const dbValue = record.applicableLevel || record.applicable_level || ''
-      console.log('数据库返回的适用护理级别:', dbValue, '类型:', typeof dbValue)
+      const levelValue = record.applicableLevel || record.applicable_level || ''
+      console.log('数据库返回的适用护理级别:', levelValue, '类型:', typeof levelValue)
       
-      // 如果是字符串，尝试转换为数组
-      if (typeof dbValue === 'string') {
-        // 处理空格分隔的字符串，如"1 2 3"，并过滤掉(Null)字符串
-        applicableLevels = dbValue.split(/\s+/)
+      // 直接获取值，确保是字符串或数字类型
+      let applicableLevel = levelValue
+      if (typeof levelValue === 'string') {
+        // 处理空格分隔的字符串，只取第一个值（因为现在是单选）
+        const firstValue = levelValue.split(/\s+/)
           .map(item => item.trim())
-          .filter(item => item && item !== '(Null)')
-          .map(item => {
-            // 将字符串类型的数字转换为数字类型，确保getLevelText函数能正确识别
-            const levelNum = Number(item)
-            return isNaN(levelNum) ? item : levelNum
-          })
-        console.log('处理后的适用护理级别:', applicableLevels)
-      } else if (Array.isArray(dbValue)) {
-        // 如果已经是数组，直接使用，但确保元素是数字类型
-        applicableLevels = dbValue.map(item => {
-          const levelNum = Number(item)
-          return isNaN(levelNum) ? item : levelNum
-        })
-        console.log('处理后的数组适用护理级别:', applicableLevels)
-      } else if (typeof dbValue === 'number') {
-        // 如果是数字，转为数组
-        applicableLevels = [dbValue]
-        console.log('处理后的单个数字适用护理级别:', applicableLevels)
+          .filter(item => item && item !== '(Null)')[0] || ''
+        
+        // 将字符串类型的数字转换为数字类型，确保getLevelText函数能正确识别
+        const levelNum = Number(firstValue)
+        applicableLevel = isNaN(levelNum) ? firstValue : levelNum
+      } else if (Array.isArray(levelValue)) {
+        // 如果是数组，只取第一个值（兼容旧数据）
+        applicableLevel = levelValue[0] || ''
       }
       
       const processedRecord = {
@@ -331,7 +315,7 @@ const fetchNursingContents = async () => {
         name: record.name || '',
         category: record.category || '',
         description: record.description || '',
-        applicableLevels: applicableLevels
+        applicableLevel: applicableLevel
       }
       
       console.log('处理后的记录:', processedRecord)
@@ -432,7 +416,7 @@ const resetForm = () => {
     name: '',
     category: '',
     description: '',
-    applicableLevels: []
+    applicableLevel: ''
   })
 }
 
@@ -447,37 +431,14 @@ const showAddDialog = () => {
 const showEditDialog = (row) => {
   dialogTitle.value = '编辑护理内容'
   
-  // 深拷贝行数据，避免直接修改原数据
+  // 简单深拷贝
   const rowCopy = JSON.parse(JSON.stringify(row))
   
-  // 处理适用护理级别，确保它是数组类型
-  let applicableLevels = rowCopy.applicableLevels || []
-  
-  // 如果是字符串，尝试转换为数组
-  if (typeof applicableLevels === 'string') {
-    try {
-      // 尝试解析JSON字符串
-      applicableLevels = JSON.parse(applicableLevels)
-      // 如果解析后不是数组，转为数组
-      if (!Array.isArray(applicableLevels)) {
-        applicableLevels = [applicableLevels]
-      }
-    } catch (e) {
-      // 如果解析失败，可能是逗号分隔的字符串
-      applicableLevels = applicableLevels.split(',').map(item => item.trim()).filter(Boolean)
-    }
-  }
-  
-  // 确保最终是数组
-  if (!Array.isArray(applicableLevels)) {
-    applicableLevels = []
-  }
-  
-  // 更新行数据中的适用护理级别
-  rowCopy.applicableLevels = applicableLevels
-  
-  // 将处理后的行数据赋值给表单
+  // 直接赋值给表单
   Object.assign(contentForm, rowCopy)
+  
+  // 确保 applicableLevel 字段存在（防止 rowCopy 中没有这个字段导致表单没反应）
+  contentForm.applicableLevel = rowCopy.applicableLevel || ''
   
   dialogVisible.value = true
 }
@@ -494,9 +455,8 @@ const handleSubmit = async () => {
       name: contentForm.name,
       category: contentForm.category,
       description: contentForm.description,
-      // 从数据库截图看，applicable_level字段是空格分隔的字符串
-      // 将前端的applicableLevels数组转换为空格分隔的字符串
-      applicable_level: Array.isArray(contentForm.applicableLevels) ? contentForm.applicableLevels.join(' ') : ''
+      // 直接提交，无需转换
+      applicable_level: contentForm.applicableLevel
     }
     
     console.log('提交的数据:', submitData)
