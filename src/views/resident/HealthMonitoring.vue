@@ -254,45 +254,57 @@ const healthAlerts = ref([])
 // 获取血压记录
 const fetchBloodPressureRecords = async () => {
   try {
-    const response = await getBloodPressureRecords()
+    // 添加residentId参数，与健康监测可视化组件保持一致
+    const response = await getBloodPressureRecords({ residentId: '' })
     if (response.data.success) {
       bloodPressureRecords.value = response.data.data || []
     } else {
-      ElMessage.error(response.data.message || '获取血压记录失败')
+      console.warn('获取血压记录失败:', response.data.message)
+      // 不显示错误消息，只在控制台输出
+      bloodPressureRecords.value = []
     }
   } catch (error) {
-    ElMessage.error('获取血压记录失败')
     console.error('获取血压记录失败:', error)
+    // 不显示错误消息，只在控制台输出
+    bloodPressureRecords.value = []
   }
 }
 
 // 获取血糖记录
 const fetchBloodSugarRecords = async () => {
   try {
-    const response = await getBloodSugarRecords()
+    // 添加residentId参数，与健康监测可视化组件保持一致
+    const response = await getBloodSugarRecords({ residentId: '' })
     if (response.data.success) {
       bloodSugarRecords.value = response.data.data || []
     } else {
-      ElMessage.error(response.data.message || '获取血糖记录失败')
+      console.warn('获取血糖记录失败:', response.data.message)
+      // 不显示错误消息，只在控制台输出
+      bloodSugarRecords.value = []
     }
   } catch (error) {
-    ElMessage.error('获取血糖记录失败')
     console.error('获取血糖记录失败:', error)
+    // 不显示错误消息，只在控制台输出
+    bloodSugarRecords.value = []
   }
 }
 
 // 获取心率记录
 const fetchHeartRateRecords = async () => {
   try {
-    const response = await getHeartRateRecords()
+    // 添加residentId参数，与健康监测可视化组件保持一致
+    const response = await getHeartRateRecords({ residentId: '' })
     if (response.data.success) {
       heartRateRecords.value = response.data.data || []
     } else {
-      ElMessage.error(response.data.message || '获取心率记录失败')
+      console.warn('获取心率记录失败:', response.data.message)
+      // 不显示错误消息，只在控制台输出
+      heartRateRecords.value = []
     }
   } catch (error) {
-    ElMessage.error('获取心率记录失败')
     console.error('获取心率记录失败:', error)
+    // 不显示错误消息，只在控制台输出
+    heartRateRecords.value = []
   }
 }
 
@@ -304,26 +316,33 @@ const fetchResidentsList = async () => {
       // 过滤出当前入住的老人
       residentsList.value = (response.data.data || []).filter(resident => resident.status === '入住')
     } else {
-      ElMessage.error(response.data.message || '获取老人列表失败')
+      console.warn('获取老人列表失败:', response.data.message)
+      // 不显示错误消息，只在控制台输出
+      residentsList.value = []
     }
   } catch (error) {
-    ElMessage.error('获取老人列表失败')
     console.error('获取老人列表失败:', error)
+    // 不显示错误消息，只在控制台输出
+    residentsList.value = []
   }
 }
 
 // 获取健康预警
 const fetchHealthAlerts = async () => {
   try {
-    const response = await getHealthAlerts()
+    // 添加residentId参数，与健康监测可视化组件保持一致
+    const response = await getHealthAlerts({ residentId: '' })
     if (response.data.success) {
       healthAlerts.value = response.data.data || []
     } else {
-      ElMessage.error(response.data.message || '获取健康预警失败')
+      console.warn('获取健康预警失败:', response.data.message)
+      // 不显示错误消息，只在控制台输出
+      healthAlerts.value = []
     }
   } catch (error) {
-    ElMessage.error('获取健康预警失败')
     console.error('获取健康预警失败:', error)
+    // 不显示错误消息，只在控制台输出
+    healthAlerts.value = []
   }
 }
 

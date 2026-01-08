@@ -79,7 +79,7 @@
                   </div>
                 </template>
               </el-table-column>
-              <el-table-column prop="duration" label="预计时长(分钟)" width="150" align="center" sortable />
+
               <el-table-column label="操作" width="120" align="center">
                 <template #default="scope">
                   <el-dropdown>
@@ -168,17 +168,7 @@
             <el-option label="SVIP" value="5" />
           </el-select>
         </el-form-item>
-        
-        <el-form-item label="预计时长(分钟)" prop="duration">
-          <el-input-number
-            v-model="contentForm.duration"
-            :min="1"
-            :max="360"
-            :step="5"
-            placeholder="请输入预计时长"
-            style="width: 100%"
-          />
-        </el-form-item>
+
       </el-form>
       
       <template #footer>
@@ -222,8 +212,8 @@ const contentForm = reactive({
   name: '',
   category: '',
   description: '',
-  applicableLevels: [],
-  duration: 30
+  applicableLevels: [], // 前端显示用
+  applicable_level: '' // 后端提交用
 })
 
 // 表单验证规则
@@ -231,11 +221,7 @@ const contentRules = {
   name: [{ required: true, message: '请输入护理内容名称', trigger: 'blur' }],
   category: [{ required: true, message: '请选择护理类型', trigger: 'change' }],
   description: [{ required: true, message: '请输入护理内容描述', trigger: 'blur' }],
-  applicableLevels: [{ required: true, message: '请选择适用护理级别', trigger: 'change' }],
-  duration: [
-    { required: true, message: '请输入预计时长', trigger: 'blur' },
-    { type: 'number', min: 1, message: '预计时长不能少于1分钟', trigger: 'blur,change' }
-  ]
+  applicableLevels: [{ required: true, message: '请选择适用护理级别', trigger: 'change' }]
 }
 
 // 生命周期
@@ -304,15 +290,54 @@ const fetchNursingContents = async () => {
     total.value = typeof processedData.total === 'number' ? processedData.total : nursingContentsList.value.length
     
     // 为每条记录添加默认值，防止表格显示异常
-    nursingContentsList.value = nursingContentsList.value.map(record => ({
-      ...record,
-      id: record.id || '',
-      name: record.name || '',
-      category: record.category || '',
-      description: record.description || '',
-      applicableLevels: record.applicableLevels || [],
-      duration: record.duration || 0
-    }))
+    nursingContentsList.value = nursingContentsList.value.map(record => {
+      console.log('原始记录:', record)
+      
+      // 处理适用护理级别，确保它是数组类型
+      let applicableLevels = []
+      
+      // 从数据库截图看，字段名是applicable_level（下划线），而不是applicableLevels（驼峰）
+      const dbValue = record.applicable_level || ''
+      console.log('数据库返回的适用护理级别:', dbValue, '类型:', typeof dbValue)
+      
+      // 如果是字符串，尝试转换为数组
+      if (typeof dbValue === 'string') {
+        // 处理空格分隔的字符串，如"1 2 3"，并过滤掉(Null)字符串
+        applicableLevels = dbValue.split(/\s+/)
+          .map(item => item.trim())
+          .filter(item => item && item !== '(Null)')
+          .map(item => {
+            // 将字符串类型的数字转换为数字类型，确保getLevelText函数能正确识别
+            const levelNum = Number(item)
+            return isNaN(levelNum) ? item : levelNum
+          })
+        console.log('处理后的适用护理级别:', applicableLevels)
+      } else if (Array.isArray(dbValue)) {
+        // 如果已经是数组，直接使用，但确保元素是数字类型
+        applicableLevels = dbValue.map(item => {
+          const levelNum = Number(item)
+          return isNaN(levelNum) ? item : levelNum
+        })
+        console.log('处理后的数组适用护理级别:', applicableLevels)
+      } else if (typeof dbValue === 'number') {
+        // 如果是数字，转为数组
+        applicableLevels = [dbValue]
+        console.log('处理后的单个数字适用护理级别:', applicableLevels)
+      }
+      
+      const processedRecord = {
+        ...record,
+        id: record.id || '',
+        name: record.name || '',
+        category: record.category || '',
+        description: record.description || '',
+        applicableLevels: applicableLevels
+      }
+      
+      console.log('处理后的记录:', processedRecord)
+      
+      return processedRecord
+    })
     
   } catch (error) {
     console.error('获取护理内容列表失败:', error)
@@ -407,8 +432,7 @@ const resetForm = () => {
     name: '',
     category: '',
     description: '',
-    applicableLevels: [],
-    duration: 30
+    applicableLevels: []
   })
 }
 
@@ -422,7 +446,39 @@ const showAddDialog = () => {
 // 显示编辑对话框
 const showEditDialog = (row) => {
   dialogTitle.value = '编辑护理内容'
-  Object.assign(contentForm, row)
+  
+  // 深拷贝行数据，避免直接修改原数据
+  const rowCopy = JSON.parse(JSON.stringify(row))
+  
+  // 处理适用护理级别，确保它是数组类型
+  let applicableLevels = rowCopy.applicableLevels || []
+  
+  // 如果是字符串，尝试转换为数组
+  if (typeof applicableLevels === 'string') {
+    try {
+      // 尝试解析JSON字符串
+      applicableLevels = JSON.parse(applicableLevels)
+      // 如果解析后不是数组，转为数组
+      if (!Array.isArray(applicableLevels)) {
+        applicableLevels = [applicableLevels]
+      }
+    } catch (e) {
+      // 如果解析失败，可能是逗号分隔的字符串
+      applicableLevels = applicableLevels.split(',').map(item => item.trim()).filter(Boolean)
+    }
+  }
+  
+  // 确保最终是数组
+  if (!Array.isArray(applicableLevels)) {
+    applicableLevels = []
+  }
+  
+  // 更新行数据中的适用护理级别
+  rowCopy.applicableLevels = applicableLevels
+  
+  // 将处理后的行数据赋值给表单
+  Object.assign(contentForm, rowCopy)
+  
   dialogVisible.value = true
 }
 
@@ -432,18 +488,31 @@ const handleSubmit = async () => {
     // 表单验证
     await contentFormRef.value.validate()
     
+    // 准备提交数据，确保使用正确的字段名和格式
+    const submitData = {
+      id: contentForm.id,
+      name: contentForm.name,
+      category: contentForm.category,
+      description: contentForm.description,
+      // 从数据库截图看，applicable_level字段是空格分隔的字符串
+      // 将前端的applicableLevels数组转换为空格分隔的字符串
+      applicable_level: Array.isArray(contentForm.applicableLevels) ? contentForm.applicableLevels.join(' ') : ''
+    }
+    
+    console.log('提交的数据:', submitData)
+    
     let response
     let successMessage
     let errorMessage
     
     if (contentForm.id) {
       // 更新护理内容
-      response = await updateNursingContent(contentForm)
+      response = await updateNursingContent(submitData)
       successMessage = '护理内容更新成功'
       errorMessage = '护理内容更新失败'
     } else {
       // 添加护理内容
-      response = await addNursingContent(contentForm)
+      response = await addNursingContent(submitData)
       successMessage = '护理内容添加成功'
       errorMessage = '护理内容添加失败'
     }

@@ -120,11 +120,19 @@ export const dischargeResident = (residentId, reason, operator) => {
 // 血压记录API
 // 获取血压记录列表
 export const getBloodPressureRecords = (params) => {
-  return request({
-    url: '/health-monitoring/blood-pressure',
-    method: 'get',
-    params
-  })
+  if (params && params.residentId) {
+    // 使用路径参数调用
+    return request({
+      url: `/health-monitoring/blood-pressure/${params.residentId}`,
+      method: 'get'
+    })
+  } else {
+    // 调用无参数版本
+    return request({
+      url: '/health-monitoring/blood-pressure',
+      method: 'get'
+    })
+  }
 }
 
 // 添加血压记录
@@ -139,11 +147,19 @@ export const addBloodPressureRecord = (data) => {
 // 血糖记录API
 // 获取血糖记录列表
 export const getBloodSugarRecords = (params) => {
-  return request({
-    url: '/health-monitoring/blood-sugar',
-    method: 'get',
-    params
-  })
+  if (params && params.residentId) {
+    // 使用路径参数调用
+    return request({
+      url: `/health-monitoring/blood-sugar/${params.residentId}`,
+      method: 'get'
+    })
+  } else {
+    // 调用无参数版本
+    return request({
+      url: '/health-monitoring/blood-sugar',
+      method: 'get'
+    })
+  }
 }
 
 // 添加血糖记录
@@ -158,11 +174,19 @@ export const addBloodSugarRecord = (data) => {
 // 心率记录API
 // 获取心率记录列表
 export const getHeartRateRecords = (params) => {
-  return request({
-    url: '/health-monitoring/heart-rate',
-    method: 'get',
-    params
-  })
+  if (params && params.residentId) {
+    // 使用路径参数调用
+    return request({
+      url: `/health-monitoring/heart-rate/${params.residentId}`,
+      method: 'get'
+    })
+  } else {
+    // 调用无参数版本
+    return request({
+      url: '/health-monitoring/heart-rate',
+      method: 'get'
+    })
+  }
 }
 
 // 添加心率记录
@@ -176,9 +200,9 @@ export const addHeartRateRecord = (data) => {
 
 // 获取健康预警
 export const getHealthAlerts = (params) => {
+  // 后端健康预警接口不支持参数，忽略params
   return request({
     url: '/health-monitoring/alerts',
-    method: 'get',
-    params
+    method: 'get'
   })
 }

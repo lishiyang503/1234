@@ -94,6 +94,12 @@ const routes = [
         path: '/nursing/records',
         name: 'NursingRecords',
         component: () => import('@/views/nursing/NursingRecords.vue')
+      },
+      // 健康监测可视化
+      {
+        path: '/monitor',
+        name: 'Monitor',
+        component: () => import('@/views/MonitorView.vue')
       }
     ]
   }

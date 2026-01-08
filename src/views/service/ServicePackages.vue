@@ -317,7 +317,21 @@ const fetchServicePackages = async () => {
     })
     
     if (response.data.success) {
-      servicePackagesList.value = response.data.data.list || []
+      // 获取原始数据
+      let packages = response.data.data.list || []
+      
+      // 定义排序规则：基础 -> 医疗照护 -> 至尊康养
+      const levelOrder = {
+        '基础': 1,
+        '医疗照护': 2,
+        '至尊康养': 3
+      }
+      
+      // 按照级别排序
+      servicePackagesList.value = packages.sort((a, b) => {
+        return (levelOrder[a.level] || 99) - (levelOrder[b.level] || 99)
+      })
+      
       total.value = response.data.data.total || 0
     } else {
       ElMessage.error(response.data.message || '获取服务套餐列表失败')
