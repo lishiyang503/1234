@@ -184,6 +184,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus, ArrowDown, Edit, Delete, Search } from '@element-plus/icons-vue'
 import { getNursingContents, addNursingContent, updateNursingContent, deleteNursingContent } from '@/api/nursing'
 
 // 搜索和筛选参数

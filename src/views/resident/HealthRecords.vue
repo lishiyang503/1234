@@ -570,7 +570,7 @@ const handleSubmit = async () => {
   height: 100%;
   padding: 20px;
   box-sizing: border-box;
-  background-color: #f5f7fa;
+  background-color: var(--bg-primary);
 }
 
 /* 页面头部 */
@@ -581,18 +581,16 @@ const handleSubmit = async () => {
 }
 
 .page-title {
-  font-size: 28px;
-  font-weight: 700;
+  font-size: 20px;
+  font-weight: 600;
   margin: 0 0 8px 0;
-  color: #303133;
-  transition: all 0.3s ease;
+  color: var(--text-primary);
 }
 
 .page-subtitle {
   font-size: 16px;
-  color: #606266;
+  color: var(--text-secondary);
   margin: 0;
-  transition: all 0.3s ease;
 }
 
 /* 内容区域 */
@@ -605,15 +603,14 @@ const handleSubmit = async () => {
 /* 卡片样式 */
 .card {
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
   overflow: hidden;
-  transition: all 0.3s ease;
 }
 
 .card:hover {
-  box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.15);
-  transform: translateY(-2px);
+  box-shadow: none;
+  transform: none;
 }
 
 .card-header {
@@ -626,10 +623,10 @@ const handleSubmit = async () => {
 }
 
 .card-title {
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 500;
   margin: 0;
-  color: #303133;
+  color: var(--text-primary);
 }
 
 .card-body {
@@ -678,11 +675,28 @@ const handleSubmit = async () => {
 
 /* 表格行样式 */
 .even-row {
-  background-color: #f5f7fa;
+  background-color: var(--bg-primary);
 }
 
 .odd-row {
   background-color: white;
+}
+
+/* 表格样式优化 */
+:deep(.el-table th) {
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  padding: 12px 0 !important;
+  background-color: var(--bg-primary) !important;
+}
+
+:deep(.el-table td) {
+  font-size: 16px !important;
+  padding: 12px 0 !important;
+}
+
+:deep(.el-table tr:hover > td) {
+  background-color: var(--bg-hover) !important;
 }
 
 /* 表单行样式 */
@@ -706,8 +720,8 @@ const handleSubmit = async () => {
 
 /* 按钮悬停效果 */
 :deep(.el-button:hover) {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transform: none;
+  box-shadow: none;
 }
 
 /* 表格加载动画 */

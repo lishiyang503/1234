@@ -5,17 +5,50 @@
       <div class="navbar-content">
         <div class="brand-section">
           <div class="brand-logo">
-            <div class="logo-icon">🏨</div>
-            <h1 class="brand-name">颐养中心</h1>
+            <div class="logo-icon">
+              <svg width="40" height="40" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <!-- 渐变背景 -->
+                <defs>
+                  <linearGradient id="skyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#FF8C00" />
+                    <stop offset="100%" stop-color="#FFA500" />
+                  </linearGradient>
+                  <linearGradient id="sunGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#FF4500" />
+                    <stop offset="100%" stop-color="#DC143C" />
+                  </linearGradient>
+                  <linearGradient id="mountainGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#696969" />
+                    <stop offset="100%" stop-color="#808080" />
+                  </linearGradient>
+                </defs>
+                <!-- 背景 -->
+                <circle cx="50" cy="50" r="45" fill="url(#skyGradient)" />
+                <!-- 太阳光芒 -->
+                <g fill="#FFD700" stroke="#FFD700" stroke-width="2">
+                  <path d="M50 10 L50 20" />
+                  <path d="M50 80 L50 90" />
+                  <path d="M10 50 L20 50" />
+                  <path d="M80 50 L90 50" />
+                  <path d="M22 22 L32 32" />
+                  <path d="M68 68 L78 78" />
+                  <path d="M22 78 L32 68" />
+                  <path d="M68 32 L78 22" />
+                </g>
+                <!-- 像手一样的大山 -->
+                <path d="M20 80 Q35 65 50 70 Q65 65 80 80 L90 100 L10 100 Z" fill="url(#mountainGradient)" />
+                <!-- 缓缓落下的夕阳 -->
+                <circle cx="50" cy="65" r="15" fill="url(#sunGradient)" />
+              </svg>
+            </div>
+            <h1 class="brand-name">东软颐养中心</h1>
           </div>
-          <p class="brand-subtitle">养老院管理系统</p>
         </div>
         
         <div class="user-info">
           <el-avatar :size="40" src="https://api.dicebear.com/7.x/avataaars/svg?seed=admin" />
           <div class="user-details">
-            <span class="user-name">{{ username || '管理员' }}</span>
-            <span class="user-role">{{ role || '系统管理员' }}</span>
+            <span class="user-name">{{ greeting }}, {{ username || '管理员' }}</span>
           </div>
           <el-dropdown trigger="click">
             <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
@@ -28,20 +61,53 @@
         </div>
       </div>
     </div>
-
-    <!-- 主要内容区域 -->
+    
+    <!-- 主内容区 -->
     <div class="main-content">
       <!-- 左侧侧边栏 -->
-      <div class="sidebar">
+      <div 
+        class="sidebar" 
+        :class="{ hovered: isSidebarHovered, pinned: isSidebarPinned }"
+        @mouseenter="isSidebarHovered = true"
+        @mouseleave="isSidebarHovered = false"
+      >
+        <!-- 侧边栏顶部 -->
         <div class="sidebar-header">
-          <h2 class="sidebar-title">功能菜单</h2>
-          <p class="sidebar-subtitle">管理所有系统功能</p>
+          <div class="logo-small">
+            <svg width="24" height="24" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="50" cy="50" r="45" fill="url(#skyGradient)" />
+              <circle cx="50" cy="65" r="15" fill="url(#sunGradient)" />
+            </svg>
+          </div>
+          <h2 class="sidebar-title">东软颐养</h2>
+          <button 
+            class="pin-button" 
+            :class="{ pinned: isSidebarPinned }"
+            @click="toggleSidebarPin"
+            title="固定侧边栏"
+          >
+            <el-icon>
+              <svg v-if="isSidebarPinned" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 1024 1024"><path fill="currentColor" d="m698.304 256-55.68 60.352l100.352 107.584-181.248 189.76l-156.16-155.392L315.136 640l239.68 250.24l110.592-115.2l165.12-175.616l60.352-64.896l36.672-39.424V302.336z"></path></svg>
+              <svg v-else xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 1024 1024"><path fill="currentColor" d="M928 472H856v288.064l-70.336-70.336l-265.152 265.152l-194.56-194.56l265.216-265.28L440 320H80v368h48v160h832V472h-72zm-720-200h272v160H208V272z"></path></svg>
+            </el-icon>
+          </button>
         </div>
         
+        <!-- 侧边栏菜单 -->
         <div class="sidebar-menu">
-          <!-- 房间/床位管理 -->
+          <!-- 首页 -->
+          <div 
+            class="menu-item" 
+            :class="{ active: $route.path === '/' }"
+            @click="navigateTo('/')"
+          >
+            <el-icon><House /></el-icon>
+            <span>首页</span>
+          </div>
+          
+          <!-- 房间床位管理 -->
           <div class="menu-section">
-            <h3 class="menu-section-title">房间/床位管理</h3>
+            <h3 class="menu-section-title">房间床位管理</h3>
             <div 
               class="menu-item" 
               :class="{ active: $route.path.includes('/rooms') }"
@@ -49,6 +115,14 @@
             >
               <el-icon><House /></el-icon>
               <span>房间列表</span>
+            </div>
+            <div 
+              class="menu-item" 
+              :class="{ active: $route.path.includes('/beds') }"
+              @click="navigateTo('/beds')"
+            >
+              <el-icon><Document /></el-icon>
+              <span>床位列表</span>
             </div>
           </div>
           
@@ -84,12 +158,17 @@
               <el-icon><Document /></el-icon>
               <span>健康档案</span>
             </div>
-            <div class="menu-item has-submenu" :class="{ active: $route.path.includes('/health-monitoring') }">
-              <div class="menu-item-main" @click="navigateTo('/health-monitoring/daily')">
+            <!-- 健康监测（可展开） -->
+            <div class="menu-item expandable" :class="{ open: healthOpen, active: $route.path.includes('/health-monitoring') }">
+              <div class="menu-item-main" @click="toggleHealth">
                 <el-icon><Monitor /></el-icon>
                 <span>健康监测</span>
+                <el-icon class="arrow">
+                  <ArrowDown />
+                </el-icon>
               </div>
-              <div class="submenu">
+
+              <div class="submenu-vertical">
                 <div 
                   class="submenu-item" 
                   :class="{ active: $route.path === '/health-monitoring/daily' }"
@@ -180,69 +259,121 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+
 import FloatingNursingPanel from '@/components/FloatingNursingPanel.vue'
+import {
+  House,
+  Food,
+  User,
+  Document,
+  Monitor,
+  Clock,
+  Service,
+  ShoppingCart,
+  List,
+  Calendar,
+  ArrowDown
+} from '@element-plus/icons-vue'
 
 const router = useRouter()
 const username = ref('')
 const role = ref('')
+const greeting = ref('')
+const isSidebarHovered = ref(false)
+const isSidebarPinned = ref(false)
+const healthOpen = ref(false)
+
+// 计算问候语
+const getGreeting = () => {
+  const hour = new Date().getHours()
+  if (hour < 6) return '凌晨好'
+  if (hour < 12) return '早上好'
+  if (hour < 14) return '中午好'
+  if (hour < 18) return '下午好'
+  return '晚上好'
+}
 
 onMounted(() => {
   // 从localStorage获取用户信息
   username.value = localStorage.getItem('username') || '管理员'
   role.value = localStorage.getItem('role') || '系统管理员'
+  // 从localStorage获取侧边栏固定状态
+  isSidebarPinned.value = localStorage.getItem('sidebarPinned') === 'true'
+  // 设置问候语
+  greeting.value = getGreeting()
+  // 每分钟更新一次问候语
+  setInterval(() => {
+    greeting.value = getGreeting()
+  }, 60000)
 })
 
+// 固定/取消固定侧边栏
+const toggleSidebarPin = () => {
+  isSidebarPinned.value = !isSidebarPinned.value
+  localStorage.setItem('sidebarPinned', isSidebarPinned.value)
+}
+
+// 导航到指定路由
 const navigateTo = (path) => {
   router.push(path)
 }
 
+// 退出登录
 const handleLogout = () => {
   // 清除localStorage
   localStorage.removeItem('token')
   localStorage.removeItem('username')
   localStorage.removeItem('role')
-  
-  ElMessage.success('退出登录成功')
+  localStorage.removeItem('sidebarPinned')
+  // 跳转到登录页
   router.push('/login')
+  ElMessage.success('已成功退出登录')
+}
+
+// 切换健康监测子菜单
+const toggleHealth = () => {
+  healthOpen.value = !healthOpen.value
 }
 </script>
 
 <style scoped>
+/* 全局样式 */
 .layout-container {
   width: 100%;
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  overflow: hidden;
+  background-color: #f5f7fa;
+  font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
 }
 
+/* 顶部导航栏 */
 .top-navbar {
-  height: 80px;
-  background: var(--gradient-card);
-  box-shadow: var(--shadow-sm);
+  height: 60px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  position: relative;
   z-index: 100;
-  display: flex;
-  align-items: center;
-  padding: 0 24px;
 }
 
 .navbar-content {
-  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 1600px;
+  height: 100%;
+  padding: 0 20px;
+  max-width: 1200px;
   margin: 0 auto;
+  width: 100%;
 }
 
+/* 品牌标识 */
 .brand-section {
   display: flex;
-  flex-direction: column;
+  align-items: center;
 }
 
 .brand-logo {
@@ -251,368 +382,329 @@ const handleLogout = () => {
   gap: 12px;
 }
 
-.logo-icon {
-  font-size: 32px;
+.logo-icon svg {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  transition: transform 0.3s ease;
+}
+
+.logo-icon:hover svg {
+  transform: scale(1.1);
 }
 
 .brand-name {
-  font-size: 24px;
-  font-weight: 700;
+  color: white;
+  font-size: 20px;
+  font-weight: 600;
   margin: 0;
-  color: var(--text-primary);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
 }
 
-.brand-subtitle {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin: 0;
+.brand-name:hover {
+  transform: translateY(-1px);
 }
 
+/* 用户信息 */
 .user-info {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 15px;
+  color: white;
 }
 
 .user-details {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: flex-end;
 }
 
 .user-name {
+  font-weight: 500;
   font-size: 16px;
-  font-weight: 600;
-  color: var(--text-primary);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .user-role {
-  font-size: 14px;
-  color: var(--text-secondary);
+  font-size: 12px;
+  opacity: 0.8;
 }
 
 .dropdown-icon {
-  font-size: 18px;
-  color: var(--text-secondary);
+  font-size: 20px;
   cursor: pointer;
-  transition: color 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .dropdown-icon:hover {
-  color: var(--primary-color);
+  transform: translateY(2px);
 }
 
+/* 主内容区 */
 .main-content {
   flex: 1;
   display: flex;
   overflow: hidden;
 }
 
+/* 侧边栏 */
 .sidebar {
-  width: 280px;
-  background: var(--gradient-card);
-  box-shadow: var(--shadow-sm);
-  padding: 24px;
-  overflow-y: auto;
+  width: 70px;
+  background: white;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  overflow: hidden;
   position: relative;
-  z-index: 9999;
-  overflow: visible;
+  display: flex;
+  flex-direction: column;
 }
 
+.sidebar.hovered, .sidebar.pinned {
+  width: 220px;
+}
+
+/* 侧边栏头部 */
 .sidebar-header {
-  margin-bottom: 32px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  padding: 0 15px;
+  border-bottom: 1px solid #f0f0f0;
+  position: relative;
+}
+
+.logo-small {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .sidebar-title {
-  font-size: 20px;
-  font-weight: 700;
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
+  margin: 0 10px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.sidebar-subtitle {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin: 0;
+.sidebar.hovered .sidebar-title,
+.sidebar.pinned .sidebar-title {
+  opacity: 1;
 }
 
+.pin-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #999;
+  font-size: 18px;
+  padding: 5px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  margin-left: auto;
+  opacity: 0;
+}
+
+.sidebar.hovered .pin-button,
+.sidebar.pinned .pin-button {
+  opacity: 1;
+}
+
+.pin-button:hover {
+  background: #f5f5f5;
+  color: #667eea;
+}
+
+.pin-button.pinned {
+  color: #667eea;
+}
+
+/* 侧边栏菜单 */
 .sidebar-menu {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 0;
 }
 
+/* 菜单分组标题 */
 .menu-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  margin: 15px 0;
+  padding: 0 15px;
 }
 
 .menu-section-title {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
-  color: var(--text-muted);
+  color: #999;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin: 0;
+  margin: 0 0 10px 0;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  white-space: nowrap;
 }
 
+.sidebar.hovered .menu-section-title,
+.sidebar.pinned .menu-section-title {
+  opacity: 1;
+}
+
+/* 菜单项 */
 .menu-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: var(--border-radius-sm);
+  padding: 12px 15px;
   cursor: pointer;
   transition: all 0.3s ease;
-  color: #606266;
-  font-size: 15px;
-  font-weight: 500;
+  border-radius: 8px;
+  margin: 0 10px;
+  color: #666;
+  position: relative;
+  overflow: hidden;
 }
 
 .menu-item:hover {
-  background-color: #f5f7fa;
-  color: #409eff;
-  transform: translateX(4px);
-  font-weight: 600;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  transform: translateX(5px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
 
 .menu-item.active {
-  background-color: #ecf5ff;
-  color: #409eff;
-  font-weight: 600;
-  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.15);
-  border-left: 3px solid #409eff;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
 
 .menu-item el-icon {
-  font-size: 18px;
-  transition: color 0.3s ease;
+  font-size: 20px;
+  margin-right: 15px;
+  flex-shrink: 0;
 }
 
-/* 子菜单样式 */
-.menu-item.has-submenu {
-  position: relative;
-  cursor: pointer;
+.menu-item span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.sidebar.hovered .menu-item span,
+.sidebar.pinned .menu-item span {
+  opacity: 1;
+}
+
+/* 可展开菜单项 */
+.menu-item.expandable {
+  margin-bottom: 5px;
 }
 
 .menu-item-main {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: var(--border-radius-sm);
-  transition: all 0.3s ease;
-  color: #606266;
-  font-size: 15px;
-  font-weight: 500;
   width: 100%;
 }
 
-.menu-item.has-submenu:hover .menu-item-main {
-  background-color: #f5f7fa;
-  color: #409eff;
-  transform: translateX(4px);
-  font-weight: 600;
+.menu-item-main .arrow {
+  margin-left: auto;
+  transition: transform 0.3s ease;
 }
 
-.menu-item.has-submenu.active .menu-item-main {
-  background-color: #ecf5ff;
-  color: #409eff;
-  font-weight: 600;
-  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.15);
-  border-left: 3px solid #409eff;
+.menu-item.expandable.open .arrow {
+  transform: rotate(180deg);
 }
 
-.submenu {
-  position: absolute;
-  left: 100%;
-  top: 0;
-  min-width: 220px;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  padding: 12px 0;
-  margin-left: 12px;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateX(-12px) scale(0.95);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 9999;
-  border: 1px solid rgba(228, 231, 237, 0.8);
-  backdrop-filter: blur(8px);
-}
-
-/* 子菜单箭头 */
-.submenu::before {
-  content: '';
-  position: absolute;
-  left: -6px;
-  top: 20px;
-  width: 12px;
-  height: 12px;
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(228, 231, 237, 0.8);
-  border-top: none;
-  border-right: none;
-  transform: rotate(-45deg);
-  backdrop-filter: blur(8px);
-  box-shadow: -2px 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-/* 确保子菜单在屏幕内显示 */
-.menu-item.has-submenu {
-  position: relative;
-  cursor: pointer;
-}
-
-.menu-item.has-submenu:hover .submenu {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(0) scale(1);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-}
-
-/* 确保侧边栏有足够的z-index */
-.sidebar {
-  position: relative;
-  z-index: 100;
-}
-
-/* 调整子菜单项的宽度和样式 */
-.submenu-item {
-  padding: 12px 20px;
-  color: #4a4a4a;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.25s ease;
-  white-space: nowrap;
-  min-width: 200px;
-  text-align: left;
+/* 垂直子菜单 */
+.submenu-vertical {
+  background: #f9f9f9;
   border-radius: 8px;
-  margin: 0 8px;
-  position: relative;
+  margin: 5px 10px;
   overflow: hidden;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  max-height: 0;
+  transition: max-height 0.3s ease;
 }
 
-/* 子菜单项装饰 */
-.submenu-item::before {
-  content: '';
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: #d1d5db;
-  transition: all 0.25s ease;
-  opacity: 0;
-  transform: scale(0.8);
+.menu-item.expandable.open .submenu-vertical {
+  max-height: 200px;
+}
+
+.submenu-item {
+  padding: 10px 15px 10px 45px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #666;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .submenu-item:hover {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  color: #2563eb;
-  font-weight: 600;
-  transform: translateX(4px);
-  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.12);
-}
-
-.submenu-item:hover::before {
-  opacity: 1;
-  transform: scale(1);
-  background: #2563eb;
+  background: #e8e8e8;
+  color: #667eea;
 }
 
 .submenu-item.active {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  color: #2563eb;
-  font-weight: 600;
-  transform: translateX(4px);
-  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.15);
+  background: #667eea;
+  color: white;
 }
 
-.submenu-item.active::before {
-  opacity: 1;
-  transform: scale(1);
-  background: #2563eb;
-}
-
-/* 响应式调整 */
-@media (max-width: 1200px) {
-  .submenu {
-    right: auto;
-    left: 0;
-    top: 100%;
-  }
-  
-  .submenu::before {
-    right: auto;
-    left: 20px;
-  }
-}
-
-/* 现代化菜单动画效果 */
-.menu-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  color: #606266;
-  font-size: 15px;
-  font-weight: 500;
-  position: relative;
-}
-
-.menu-item:hover {
-  background-color: #f5f7fa;
-  color: #409eff;
-  font-weight: 600;
-}
-
-.menu-item.active {
-  background-color: #ecf5ff;
-  color: #409eff;
-  font-weight: 600;
-}
-
-/* 子菜单主项样式 */
-.menu-item-main {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-  color: #606266;
-  font-size: 15px;
-  font-weight: 500;
-  width: 100%;
-  cursor: pointer;
-}
-
-.menu-item.has-submenu:hover .menu-item-main {
-  background-color: #f5f7fa;
-  color: #409eff;
-  font-weight: 600;
-}
-
-.menu-item.has-submenu.active .menu-item-main {
-  background-color: #ecf5ff;
-  color: #409eff;
-  font-weight: 600;
-}
-
+/* 内容区域 */
 .content-area {
   flex: 1;
-  padding: 24px;
   overflow-y: auto;
-  background-color: var(--bg-primary);
-  position: relative;
-  z-index: 1;
+  background: #f5f7fa;
+  padding: 20px;
+}
+
+/* 滚动条样式 */
+.content-area::-webkit-scrollbar {
+  width: 8px;
+}
+
+.content-area::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.content-area::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 10px;
+}
+
+.content-area::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .sidebar {
+    position: absolute;
+    left: -220px;
+    height: calc(100vh - 60px);
+    z-index: 99;
+    transition: left 0.3s ease;
+  }
+  
+  .sidebar.hovered {
+    left: 0;
+  }
+  
+  .sidebar.pinned {
+    left: 0;
+    width: 70px;
+  }
+  
+  .sidebar.pinned.hovered {
+    width: 220px;
+  }
+  
+  .content-area {
+    padding: 10px;
+  }
 }
 </style>

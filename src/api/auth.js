@@ -9,6 +9,15 @@ export const login = (data) => {
   })
 }
 
+// 用户注册
+export const register = (data) => {
+  return request({
+    url: '/auth/register',
+    method: 'post',
+    data
+  })
+}
+
 // 用户登出
 export const logout = () => {
   return request({
