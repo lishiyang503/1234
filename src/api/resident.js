@@ -85,14 +85,6 @@ export const getHealthRecordDetail = (id) => {
   })
 }
 
-// 根据老人ID获取健康档案
-export const getHealthRecordByResidentId = (residentId) => {
-  return request({
-    url: `/health/by-resident/${residentId}`,
-    method: 'get'
-  })
-}
-
 // 入住历史相关API
 // 获取入住历史列表
 export const getResidentHistory = (params) => {
@@ -120,17 +112,6 @@ export const dischargeResident = (residentId, reason, operator) => {
       residentId,
       reason,
       operator
-    }
-  })
-}
-
-// 根据身份证号查询老人信息
-export const getResidentByIdCard = (idCard) => {
-  return request({
-    url: '/resident/getByIdCard',
-    method: 'get',
-    params: {
-      idCard
     }
   })
 }

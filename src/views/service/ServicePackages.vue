@@ -75,13 +75,7 @@
                   <div class="package-name-section">
                     <div class="name-with-tag">
                       <h3 class="package-name">{{ pkg.name }}</h3>
-                      <el-tag 
-                        v-if="pkg.level === '基础'" 
-                        size="small" 
-                        class="recommend-tag"
-                      >
-                        推荐
-                      </el-tag>
+                      <el-tag v-if="pkg.id === 1" type="primary" class="recommend-tag">推荐</el-tag>
                     </div>
                     <div class="package-price">
                       <el-icon><Money /></el-icon>
@@ -103,12 +97,7 @@
                       <span>服务内容</span>
                     </div>
                     <div class="features-content">
-                      <span v-if="Array.isArray(pkg.features)" class="feature-tag">
-                        {{ pkg.features.join(' · ') }}
-                      </span>
-                      <span v-else class="feature-tag">
-                        {{ pkg.features }}
-                      </span>
+                      {{ pkg.features }}
                     </div>
                   </div>
                 </div>
@@ -122,7 +111,6 @@
                       @click="showEditDialog(pkg)"
                       class="edit-btn"
                     >
-                      <el-icon><Edit /></el-icon>
                       编辑
                     </el-button>
                     <el-button 
@@ -131,7 +119,6 @@
                       @click="handleDelete(pkg.id)"
                       class="delete-btn"
                     >
-                      <el-icon><Delete /></el-icon>
                       删除
                     </el-button>
                   </div>
@@ -317,20 +304,6 @@ const getLevelType = (level) => {
       return 'danger'
     default:
       return 'info'
-  }
-}
-
-// 获取服务套餐级别排序值
-const getLevelValue = (level) => {
-  switch (level) {
-    case '基础':
-      return 1
-    case '中级':
-      return 2
-    case '高级':
-      return 3
-    default:
-      return 999
   }
 }
 
@@ -627,27 +600,27 @@ const handleDelete = (id) => {
 /* 套餐卡片 */
 .package-card {
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   padding: 20px;
   transition: all 0.3s ease;
-  border: 1px solid #f0f0f0;
+  border: 1px solid #e4e7ed;
   display: flex;
   flex-direction: column;
   min-height: 320px;
 }
 
 .package-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
-  border-color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  border-color: #dcdfe6;
 }
 
 /* 卡片头部 */
 .package-card-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   margin-bottom: 16px;
   padding-bottom: 12px;
   border-bottom: 1px solid #f0f0f0;
@@ -667,7 +640,9 @@ const handleDelete = (id) => {
 
 .level-tag {
   font-weight: 600;
-  padding: 4px 16px;
+  padding: 2px 8px;
+  height: auto;
+  font-size: 12px;
 }
 
 .package-status {
@@ -685,6 +660,14 @@ const handleDelete = (id) => {
 }
 
 /* 套餐名称和价格 */
+.name-with-tag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
 .package-name-section {
   text-align: center;
 }
@@ -693,7 +676,13 @@ const handleDelete = (id) => {
   font-size: 22px;
   font-weight: 600;
   color: #303133;
-  margin: 0 0 12px 0;
+  margin: 0;
+}
+
+.recommend-tag {
+  font-size: 12px;
+  padding: 2px 8px;
+  height: auto;
 }
 
 .package-price {
@@ -704,37 +693,16 @@ const handleDelete = (id) => {
   color: #f56c6c;
   font-weight: 600;
   font-size: 24px;
+  margin-bottom: 16px;
 }
 
 .package-price .el-icon {
   font-size: 20px;
 }
 
-/* 名称和标签容器 */
-.name-with-tag {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-/* 推荐标签 */
-.recommend-tag {
-  background-color: #e6f0ff;
-  color: #409eff;
-  border-color: #d9ecff;
-  font-size: 12px;
-  padding: 2px 10px;
-  border-radius: 12px;
-}
-
 /* 描述部分 */
 .description-section {
-  padding: 16px;
-  border-radius: 8px;
-  border-bottom: 1px solid #f0f0f0;
-  margin-bottom: 16px;
+  padding: 12px 0;
 }
 
 .description-title {
@@ -742,27 +710,23 @@ const handleDelete = (id) => {
   align-items: center;
   gap: 8px;
   font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 10px;
-  font-size: 16px;
+  color: #606266;
+  margin-bottom: 8px;
+  font-size: 14px;
 }
 
 .description-text {
-  font-size: 15px;
-  color: var(--text-secondary);
-  line-height: 1.6;
-  max-height: 100px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
+  font-size: 14px;
+  color: #606266;
+  line-height: 1.5;
+  padding: 8px 12px;
+  background: #f5f7fa;
+  border-radius: 6px;
 }
 
 /* 服务内容部分 */
 .features-section {
-  padding: 16px;
-  border-radius: 8px;
+  padding: 12px 0;
 }
 
 .features-title {
@@ -770,40 +734,23 @@ const handleDelete = (id) => {
   align-items: center;
   gap: 8px;
   font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 10px;
-  font-size: 16px;
+  color: #606266;
+  margin-bottom: 8px;
+  font-size: 14px;
 }
 
 .features-content {
-  font-size: 15px;
-  color: var(--text-secondary);
-  line-height: 1.6;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  min-height: 80px;
-  align-items: flex-start;
-  padding: 0;
-  background: none;
-  border: none;
-  box-shadow: none;
-}
-
-.feature-tag {
-  background-color: #f5f7fa;
-  padding: 6px 12px;
-  border-radius: 16px;
   font-size: 14px;
-  border: 1px solid #ebeef5;
-  color: var(--text-secondary);
-  transition: all 0.3s ease;
-}
-
-.feature-tag:hover {
-  background-color: #e6f0ff;
-  border-color: #d9ecff;
-  color: #409eff;
+  line-height: 1.5;
+  color: #606266;
+  background: #f5f7fa;
+  padding: 8px 12px;
+  border-radius: 6px;
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* 卡片底部 */

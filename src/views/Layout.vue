@@ -61,53 +61,31 @@
         </div>
       </div>
     </div>
-    
-    <!-- 主内容区 -->
+
+    <!-- 主要内容区域 -->
     <div class="main-content">
       <!-- 左侧侧边栏 -->
       <div 
         class="sidebar" 
-        :class="{ hovered: isSidebarHovered, pinned: isSidebarPinned }"
-        @mouseenter="isSidebarHovered = true"
-        @mouseleave="isSidebarHovered = false"
+        :class="{ 
+          'sidebar-expanded': isSidebarHovered || isSidebarPinned, 
+          'sidebar-pinned': isSidebarPinned 
+        }"
+        @mouseenter="handleSidebarMouseEnter"
+        @mouseleave="handleSidebarMouseLeave"
       >
-        <!-- 侧边栏顶部 -->
+        <div class="sidebar-pin" :class="{ 'pinned': isSidebarPinned }" @click="toggleSidebarPin" :title="isSidebarPinned ? '取消固定' : '固定侧边栏'">
+          <div class="pin-icon"></div>
+        </div>
         <div class="sidebar-header">
-          <div class="logo-small">
-            <svg width="24" height="24" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="50" cy="50" r="45" fill="url(#skyGradient)" />
-              <circle cx="50" cy="65" r="15" fill="url(#sunGradient)" />
-            </svg>
-          </div>
-          <h2 class="sidebar-title">东软颐养</h2>
-          <button 
-            class="pin-button" 
-            :class="{ pinned: isSidebarPinned }"
-            @click="toggleSidebarPin"
-            title="固定侧边栏"
-          >
-            <el-icon>
-              <svg v-if="isSidebarPinned" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 1024 1024"><path fill="currentColor" d="m698.304 256-55.68 60.352l100.352 107.584-181.248 189.76l-156.16-155.392L315.136 640l239.68 250.24l110.592-115.2l165.12-175.616l60.352-64.896l36.672-39.424V302.336z"></path></svg>
-              <svg v-else xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 1024 1024"><path fill="currentColor" d="M928 472H856v288.064l-70.336-70.336l-265.152 265.152l-194.56-194.56l265.216-265.28L440 320H80v368h48v160h832V472h-72zm-720-200h272v160H208V272z"></path></svg>
-            </el-icon>
-          </button>
+          <h2 class="sidebar-title">功能菜单</h2>
+          
         </div>
         
-        <!-- 侧边栏菜单 -->
         <div class="sidebar-menu">
-          <!-- 首页 -->
-          <div 
-            class="menu-item" 
-            :class="{ active: $route.path === '/' }"
-            @click="navigateTo('/')"
-          >
-            <el-icon><House /></el-icon>
-            <span>首页</span>
-          </div>
-          
-          <!-- 房间床位管理 -->
+          <!-- 房间/床位管理 -->
           <div class="menu-section">
-            <h3 class="menu-section-title">房间床位管理</h3>
+            <h3 class="menu-section-title">房间/床位管理</h3>
             <div 
               class="menu-item" 
               :class="{ active: $route.path.includes('/rooms') }"
@@ -115,14 +93,6 @@
             >
               <el-icon><House /></el-icon>
               <span>房间列表</span>
-            </div>
-            <div 
-              class="menu-item" 
-              :class="{ active: $route.path.includes('/beds') }"
-              @click="navigateTo('/beds')"
-            >
-              <el-icon><Document /></el-icon>
-              <span>床位列表</span>
             </div>
           </div>
           
@@ -262,7 +232,6 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-
 import FloatingNursingPanel from '@/components/FloatingNursingPanel.vue'
 import {
   House,
@@ -310,70 +279,91 @@ onMounted(() => {
   }, 60000)
 })
 
-// 固定/取消固定侧边栏
-const toggleSidebarPin = () => {
-  isSidebarPinned.value = !isSidebarPinned.value
-  localStorage.setItem('sidebarPinned', isSidebarPinned.value)
-}
-
-// 导航到指定路由
 const navigateTo = (path) => {
   router.push(path)
 }
 
-// 退出登录
 const handleLogout = () => {
   // 清除localStorage
   localStorage.removeItem('token')
   localStorage.removeItem('username')
   localStorage.removeItem('role')
-  localStorage.removeItem('sidebarPinned')
-  // 跳转到登录页
+  
+  ElMessage.success('退出登录成功')
   router.push('/login')
-  ElMessage.success('已成功退出登录')
 }
 
-// 切换健康监测子菜单
+// 侧边栏相关函数
+const handleSidebarMouseEnter = () => {
+  if (isSidebarPinned.value) return
+  isSidebarHovered.value = true
+}
+
+const handleSidebarMouseLeave = () => {
+  if (isSidebarPinned.value) return
+  isSidebarHovered.value = false
+}
+
+const toggleSidebarPin = () => {
+  isSidebarPinned.value = !isSidebarPinned.value
+  // 保存状态到localStorage
+  localStorage.setItem('sidebarPinned', isSidebarPinned.value.toString())
+}
+
+// 健康监测子菜单展开/收起
 const toggleHealth = () => {
   healthOpen.value = !healthOpen.value
 }
+
+// 路由命中时自动展开健康监测
+watch(
+  () => router.currentRoute.value.path,
+  (path) => {
+    if (path.startsWith('/health-monitoring')) {
+      healthOpen.value = true
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <style scoped>
-/* 全局样式 */
 .layout-container {
   width: 100%;
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #f5f7fa;
-  font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  overflow: hidden;
 }
 
-/* 顶部导航栏 */
 .top-navbar {
-  height: 60px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  position: relative;
+  height: 80px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
   z-index: 100;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
 }
 
 .navbar-content {
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 100%;
-  padding: 0 20px;
-  max-width: 1200px;
-  margin: 0 auto;
-  width: 100%;
+  padding: 0;
 }
 
-/* 品牌标识 */
 .brand-section {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  margin-left: 0;
+}
+
+.user-info {
+  margin-right: 0;
 }
 
 .brand-logo {
@@ -382,249 +372,291 @@ const toggleHealth = () => {
   gap: 12px;
 }
 
-.logo-icon svg {
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-  transition: transform 0.3s ease;
+.logo-icon {
+  font-size: 32px;
 }
 
-.logo-icon:hover svg {
-  transform: scale(1.1);
+.logo-icon img {
+  width: 32px;
+  height: 32px;
 }
 
 .brand-name {
-  color: white;
   font-size: 20px;
   font-weight: 600;
   margin: 0;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  color: var(--text-primary);
 }
 
-.brand-name:hover {
-  transform: translateY(-1px);
+.brand-subtitle {
+  display: none;
 }
 
-/* 用户信息 */
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .brand-section {
+    margin-left: 10px;
+  }
+  
+  .brand-name {
+    font-size: 18px;
+  }
+  
+  .logo-icon {
+    font-size: 28px;
+  }
+  
+  .logo-icon img {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .brand-section {
+    margin-left: 5px;
+  }
+  
+  .brand-name {
+    font-size: 16px;
+  }
+  
+  .logo-icon {
+    font-size: 24px;
+  }
+  
+  .logo-icon img {
+    width: 24px;
+    height: 24px;
+  }
+}
+
 .user-info {
   display: flex;
   align-items: center;
-  gap: 15px;
-  color: white;
+  gap: 16px;
 }
 
 .user-details {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: flex-start;
 }
 
 .user-name {
-  font-weight: 500;
   font-size: 16px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .user-role {
-  font-size: 12px;
-  opacity: 0.8;
+  display: none;
 }
 
 .dropdown-icon {
-  font-size: 20px;
+  font-size: 18px;
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: color 0.3s ease;
 }
 
 .dropdown-icon:hover {
-  transform: translateY(2px);
+  color: var(--primary-color);
 }
 
-/* 主内容区 */
 .main-content {
   flex: 1;
   display: flex;
   overflow: hidden;
 }
 
-/* 侧边栏 */
 .sidebar {
-  width: 70px;
-  background: white;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-  overflow: hidden;
+  width: 60px;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  padding: 24px 8px;
+  overflow-y: auto;
   position: relative;
+  z-index: 100;
+  transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
 }
 
-.sidebar.hovered, .sidebar.pinned {
-  width: 220px;
+/* 折叠状态：收紧整体上下空间 */
+.sidebar:not(.sidebar-expanded) {
+  padding: 6px 4px;
 }
 
-/* 侧边栏头部 */
-.sidebar-header {
-  height: 60px;
-  display: flex;
-  align-items: center;
-  padding: 0 15px;
-  border-bottom: 1px solid #f0f0f0;
-  position: relative;
+/* 折叠态：header 不占任何空间 */
+.sidebar:not(.sidebar-expanded) .sidebar-header {
+  display: none;
 }
 
-.logo-small {
+/* 折叠状态下菜单项更紧凑 */
+.sidebar:not(.sidebar-expanded) .menu-item {
+  padding: 0;
+  justify-content: center;
+  border-radius: 6px;
+  height: 40px;
+}
+
+/* 折叠态下完全隐藏菜单组标题 */
+.sidebar:not(.sidebar-expanded) .menu-section-title {
+  display: none;
+}
+
+/* 折叠态下防止submenu结构撑开menu-item */
+.sidebar:not(.sidebar-expanded) .menu-item.has-submenu {
+  margin-bottom: 0;
+}
+
+/* 折叠态减少菜单组之间的空隙 */
+.sidebar:not(.sidebar-expanded) .menu-section {
+  margin-bottom: 4px;
+}
+
+/* 折叠态 hover 不要"跳太大" */
+.sidebar:not(.sidebar-expanded) .menu-item:hover {
+  background-color: #f3f6f8;
+}
+
+/* 折叠态 active 不要左边框（会显胖） */
+.sidebar:not(.sidebar-expanded) .menu-item.active {
+  border-left: none;
+  background-color: #e9f2fb;
+}
+
+.sidebar.sidebar-expanded {
+  width: 280px;
+  padding: 24px;
+}
+
+/* 固定状态的侧边栏样式 */
+.sidebar.sidebar-pinned {
+  box-shadow: inset -1px 0 0 #dbe3ea;
+}
+
+/* Pin按钮样式 */
+.sidebar-pin {
+  position: absolute;
+  top: 20px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 101;
 }
 
-.sidebar-title {
-  margin: 0 10px;
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.sidebar.sidebar-expanded .sidebar-pin {
+  opacity: 0.6;
+  visibility: visible;
 }
 
-.sidebar.hovered .sidebar-title,
-.sidebar.pinned .sidebar-title {
+.sidebar-pin:hover {
+  opacity: 1;
+  background: #f2f6f9;
+}
+
+.sidebar-pin.pinned {
+  border-color: #b9c8d3;
+  background: #eef4f8;
   opacity: 1;
 }
 
-.pin-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #999;
-  font-size: 18px;
-  padding: 5px;
-  border-radius: 4px;
+/* Pin图标样式 */
+.pin-icon {
+  width: 14px;
+  height: 14px;
+  background: currentColor;
+  mask: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Cpath d=%22M12 17c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm5-6h-10l2-6 2 2 2-2 2 6z%22/%3E%3C/svg%3E') no-repeat center / contain;
+  transition: transform 0.2s ease;
+}
+
+.sidebar-pin.pinned .pin-icon {
+  transform: rotate(-45deg);
+}
+
+
+
+.sidebar-header {
+  margin-bottom: 32px;
+  opacity: 0;
+  visibility: hidden;
   transition: all 0.3s ease;
-  margin-left: auto;
-  opacity: 0;
 }
 
-.sidebar.hovered .pin-button,
-.sidebar.pinned .pin-button {
+.sidebar.sidebar-expanded .sidebar-header {
   opacity: 1;
+  visibility: visible;
 }
 
-.pin-button:hover {
-  background: #f5f5f5;
-  color: #667eea;
-}
-
-.pin-button.pinned {
-  color: #667eea;
-}
-
-/* 侧边栏菜单 */
 .sidebar-menu {
   flex: 1;
   overflow-y: auto;
-  padding: 10px 0;
+  padding-right: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+  overflow: visible;
 }
 
-/* 菜单分组标题 */
-.menu-section {
-  margin: 15px 0;
-  padding: 0 15px;
+/* 垂直子菜单样式 */
+/* 可展开菜单项样式 */
+.menu-item.expandable {
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
-.menu-section-title {
-  font-size: 12px;
-  font-weight: 600;
-  color: #999;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin: 0 0 10px 0;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  white-space: nowrap;
-}
-
-.sidebar.hovered .menu-section-title,
-.sidebar.pinned .menu-section-title {
-  opacity: 1;
-}
-
-/* 菜单项 */
-.menu-item {
+.menu-item.expandable .menu-item-main {
   display: flex;
   align-items: center;
-  padding: 12px 15px;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
-  border-radius: 8px;
-  margin: 0 10px;
-  color: #666;
-  position: relative;
-  overflow: hidden;
-}
-
-.menu-item:hover {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  transform: translateX(5px);
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-}
-
-.menu-item.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-}
-
-.menu-item el-icon {
-  font-size: 20px;
-  margin-right: 15px;
-  flex-shrink: 0;
-}
-
-.menu-item span {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.sidebar.hovered .menu-item span,
-.sidebar.pinned .menu-item span {
-  opacity: 1;
-}
-
-/* 可展开菜单项 */
-.menu-item.expandable {
-  margin-bottom: 5px;
-}
-
-.menu-item-main {
-  display: flex;
-  align-items: center;
   width: 100%;
 }
 
-.menu-item-main .arrow {
+.menu-item.expandable .menu-item-main:hover {
+  background-color: var(--bg-hover);
+  color: var(--primary-color);
+}
+
+.menu-item.expandable .arrow {
   margin-left: auto;
-  transition: transform 0.3s ease;
+  font-size: 14px;
+  color: #9aa4af;
+  transition: transform 0.25s ease;
 }
 
 .menu-item.expandable.open .arrow {
   transform: rotate(180deg);
 }
 
-/* 垂直子菜单 */
+/* 垂直子菜单样式 */
 .submenu-vertical {
-  background: #f9f9f9;
-  border-radius: 8px;
-  margin: 5px 10px;
-  overflow: hidden;
+  padding-left: 44px;
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   max-height: 0;
+  overflow: hidden;
   transition: max-height 0.3s ease;
 }
 
@@ -632,79 +664,316 @@ const toggleHealth = () => {
   max-height: 200px;
 }
 
-.submenu-item {
-  padding: 10px 15px 10px 45px;
+.submenu-vertical .submenu-item {
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #6b7280;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+  min-width: 180px;
+  text-align: left;
+  margin: 0;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.submenu-vertical .submenu-item:hover {
+  background: #f5f7fa;
+  color: #409eff;
+}
+
+.submenu-vertical .submenu-item.active {
+  background: #ecf5ff;
+  color: #409eff;
+  font-weight: 600;
+}
+
+/* 折叠态下不显示子菜单 */
+.sidebar:not(.sidebar-expanded) .submenu-vertical {
+  display: none;
+}
+
+.sidebar.sidebar-expanded .sidebar-menu {
+  padding-right: 0;
+}
+
+.menu-section-title {
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.sidebar.sidebar-expanded .menu-section-title {
+  opacity: 1;
+  visibility: visible;
+}
+
+.menu-item span {
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  width: 0;
+  overflow: hidden;
+}
+
+.sidebar.sidebar-expanded .menu-item span {
+  opacity: 1;
+  visibility: visible;
+  width: auto;
+  overflow: visible;
+}
+
+.menu-item-main span {
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  width: 0;
+  overflow: hidden;
+}
+
+.sidebar.sidebar-expanded .menu-item-main span {
+  opacity: 1;
+  visibility: visible;
+  width: auto;
+  overflow: visible;
+}
+
+.submenu {
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.sidebar.sidebar-expanded .menu-item.has-submenu:hover .submenu {
+  opacity: 1;
+  visibility: visible;
+}
+
+.sidebar-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+}
+
+.sidebar-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.menu-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.menu-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--border-radius-sm);
   cursor: pointer;
   transition: all 0.3s ease;
-  color: #666;
+  color: #606266;
   font-size: 14px;
+  font-weight: 500;
+}
+
+.menu-item:hover {
+  background-color: var(--bg-hover);
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.menu-item.active {
+  background-color: var(--bg-hover);
+  color: var(--primary-color);
+  font-weight: 600;
+  border-left: 3px solid var(--primary-color);
+}
+
+.menu-item el-icon {
+  font-size: 18px;
+  transition: color 0.3s ease;
+}
+
+/* 子菜单样式 */
+.menu-item.has-submenu {
+  position: relative;
+  cursor: pointer;
+}
+
+.menu-item-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--border-radius-sm);
+  transition: all 0.3s ease;
+  color: #606266;
+  font-size: 14px;
+  font-weight: 500;
+  width: 100%;
+}
+
+.menu-item.has-submenu:hover .menu-item-main {
+  background-color: var(--bg-hover);
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.menu-item.has-submenu.active .menu-item-main {
+  background-color: var(--bg-hover);
+  color: var(--primary-color);
+  font-weight: 600;
+  border-left: 3px solid var(--primary-color);
+}
+
+.submenu {
+  position: absolute;
+  left: 100%;
+  top: 0;
+  min-width: 220px;
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  padding: 12px 0;
+  margin-left: 12px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-12px);
+  transition: all 0.3s ease;
+  z-index: 9999;
+  border: 1px solid var(--border-color);
+}
+
+/* 子菜单箭头 */
+.submenu::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 20px;
+  width: 12px;
+  height: 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-top: none;
+  border-right: none;
+  transform: rotate(-45deg);
+}
+
+/* 确保子菜单在屏幕内显示 */
+.menu-item.has-submenu {
+  position: relative;
+  cursor: pointer;
+}
+
+.menu-item.has-submenu:hover .submenu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0) scale(1);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* 确保侧边栏有足够的z-index */
+.sidebar {
+  position: relative;
+  z-index: 100;
+}
+
+/* 调整子菜单项的宽度和样式 */
+.submenu-item {
+  padding: 12px 20px;
+  color: #4a4a4a;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s ease;
   white-space: nowrap;
+  min-width: 200px;
+  text-align: left;
+  border-radius: 8px;
+  margin: 0 8px;
+  position: relative;
   overflow: hidden;
-  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 子菜单项装饰 */
+.submenu-item::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #d1d5db;
+  transition: all 0.25s ease;
+  opacity: 0;
+  transform: scale(0.8);
 }
 
 .submenu-item:hover {
-  background: #e8e8e8;
-  color: #667eea;
+  background: var(--bg-hover);
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.submenu-item:hover::before {
+  opacity: 1;
+  transform: scale(1);
+  background: var(--primary-color);
 }
 
 .submenu-item.active {
-  background: #667eea;
-  color: white;
+  background: var(--bg-hover);
+  color: var(--primary-color);
+  font-weight: 600;
 }
 
-/* 内容区域 */
+.submenu-item.active::before {
+  opacity: 1;
+  transform: scale(1);
+  background: var(--primary-color);
+}
+
+/* 响应式调整 */
+@media (max-width: 1200px) {
+  .submenu {
+    right: auto;
+    left: 0;
+    top: 100%;
+  }
+  
+  .submenu::before {
+    right: auto;
+    left: 20px;
+  }
+}
+
+
+
 .content-area {
   flex: 1;
+  padding: 24px;
   overflow-y: auto;
-  background: #f5f7fa;
-  padding: 20px;
-}
-
-/* 滚动条样式 */
-.content-area::-webkit-scrollbar {
-  width: 8px;
-}
-
-.content-area::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 10px;
-}
-
-.content-area::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 10px;
-}
-
-.content-area::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
-
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .sidebar {
-    position: absolute;
-    left: -220px;
-    height: calc(100vh - 60px);
-    z-index: 99;
-    transition: left 0.3s ease;
-  }
-  
-  .sidebar.hovered {
-    left: 0;
-  }
-  
-  .sidebar.pinned {
-    left: 0;
-    width: 70px;
-  }
-  
-  .sidebar.pinned.hovered {
-    width: 220px;
-  }
-  
-  .content-area {
-    padding: 10px;
-  }
+  background-color: var(--bg-primary);
+  position: relative;
+  z-index: 1;
 }
 </style>

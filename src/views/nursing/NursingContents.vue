@@ -184,7 +184,6 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, ArrowDown, Edit, Delete, Search } from '@element-plus/icons-vue'
 import { getNursingContents, addNursingContent, updateNursingContent, deleteNursingContent } from '@/api/nursing'
 
 // 搜索和筛选参数
@@ -297,8 +296,8 @@ const fetchNursingContents = async () => {
       // 处理适用护理级别，确保它是数组类型
       let applicableLevels = []
       
-      // 从数据库截图看，字段名是applicable_level（下划线），而不是applicableLevels（驼峰）
-      const dbValue = record.applicable_level || ''
+      // 【修复】兼容处理：优先尝试获取驼峰命名(常见后端返回格式)，如果不存在则尝试获取下划线命名(数据库原生格式)
+      const dbValue = record.applicableLevel || record.applicable_level || ''
       console.log('数据库返回的适用护理级别:', dbValue, '类型:', typeof dbValue)
       
       // 如果是字符串，尝试转换为数组

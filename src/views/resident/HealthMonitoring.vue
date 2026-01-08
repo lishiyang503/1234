@@ -1,118 +1,62 @@
 <template>
   <div class="health-monitoring-container">
     <div class="page-header">
-      <h2 class="page-title">每日健康指标</h2>
-      <p class="page-subtitle">实时监测和记录老人的每日健康数据</p>
+      <h2 class="page-title">健康监测</h2>
+      <p class="page-subtitle">实时记录和监测老人的健康数据</p>
     </div>
     
     <div class="content-section">
-      <!-- 每日健康数据概览 -->
-      <div class="card">
-        <div class="card-header">
-          <h3 class="card-title">今日健康数据概览</h3>
-          <el-date-picker 
-            v-model="currentDate" 
-            type="date" 
-            placeholder="选择日期" 
-            value-format="YYYY-MM-DD"
-            class="date-picker"
-            @change="fetchDailyData"
-          />
-        </div>
-        
-        <div class="card-body">
-          <div class="daily-overview">
-            <div class="overview-card blood-pressure-card">
-              <div class="overview-icon blood-pressure-icon">
-                <el-icon><Warning /></el-icon>
-              </div>
-              <div class="overview-content">
-                <h4>血压</h4>
-                <div class="overview-value" :class="getBloodPressureClass(todayBloodPressure)">
-                  {{ todayBloodPressure.systolic }}/{{ todayBloodPressure.diastolic }} mmHg
-                </div>
-                <div class="overview-status" :class="getBloodPressureStatusClass(todayBloodPressure)">
-                  {{ getBloodPressureStatus(todayBloodPressure) }}
-                </div>
-              </div>
-            </div>
-            
-            <div class="overview-card blood-sugar-card">
-              <div class="overview-icon blood-sugar-icon">
-                <el-icon><Sugar /></el-icon>
-              </div>
-              <div class="overview-content">
-                <h4>血糖</h4>
-                <div class="overview-value" :class="getBloodSugarClass(todayBloodSugar)">
-                  {{ todayBloodSugar.level }} mmol/L
-                </div>
-                <div class="overview-status" :class="getBloodSugarStatusClass(todayBloodSugar)">
-                  {{ todayBloodSugar.status || '空腹' }}
-                </div>
-              </div>
-            </div>
-            
-            <div class="overview-card heart-rate-card">
-              <div class="overview-icon heart-rate-icon">
-                <el-icon><Link /></el-icon>
-              </div>
-              <div class="overview-content">
-                <h4>心率</h4>
-                <div class="overview-value" :class="getHeartRateClass(todayHeartRate)">
-                  {{ todayHeartRate.rate }} 次/分
-                </div>
-                <div class="overview-status" :class="getHeartRateStatusClass(todayHeartRate)">
-                  {{ getHeartRateStatus(todayHeartRate) }}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
       <!-- 健康数据录入卡片 -->
       <div class="card">
         <div class="card-header">
-          <h3 class="card-title">健康数据录入</h3>
-          <el-button type="primary" @click="toggleInputForm">
-            <el-icon><Edit /></el-icon>
-            {{ showInputForm ? '收起录入' : '展开录入' }}
-          </el-button>
+          <h3 class="card-title">日常健康数据录入</h3>
         </div>
         
-        <div class="card-body" v-if="showInputForm">
+        <div class="card-body">
           <el-tabs v-model="activeTab" class="health-tabs">
             <!-- 血压记录 -->
             <el-tab-pane label="血压记录" name="bloodPressure">
               <div class="tab-content">
-                <div class="form-container">
-                  <el-form :model="bloodPressureForm" label-width="120px" class="health-form">
-                    <el-form-item label="老人姓名" required>
-                      <el-select v-model="bloodPressureForm.residentId" placeholder="请选择老人姓名" style="width: 200px;">
-                        <el-option
-                          v-for="resident in residentsList"
-                          :key="resident.id"
-                          :label="resident.name"
-                          :value="resident.id"
-                        />
-                      </el-select>
-                    </el-form-item>
-                    <el-form-item label="收缩压(mmHg)" required>
-                      <el-input-number v-model="bloodPressureForm.systolic" :min="60" :max="200" style="width: 150px;"></el-input-number>
-                    </el-form-item>
-                    <el-form-item label="舒张压(mmHg)" required>
-                      <el-input-number v-model="bloodPressureForm.diastolic" :min="40" :max="120" style="width: 150px;"></el-input-number>
-                    </el-form-item>
-                    <el-form-item label="测量时间">
-                      <el-date-picker v-model="bloodPressureForm.measureTime" type="datetime" format="YYYY-MM-DD HH:mm" value-format="YYYY-MM-DD HH:mm:ss" placeholder="选择测量时间"></el-date-picker>
-                    </el-form-item>
-                    <el-form-item label="测量备注">
-                      <el-input v-model="bloodPressureForm.notes" type="textarea" :rows="3" placeholder="请输入备注信息"></el-input>
-                    </el-form-item>
-                    <el-form-item>
-                      <el-button type="primary" @click="saveBloodPressure">保存记录</el-button>
-                    </el-form-item>
-                  </el-form>
+                <el-form :model="bloodPressureForm" label-width="120px" class="health-form">
+                  <el-form-item label="老人姓名" required>
+                    <el-select v-model="bloodPressureForm.residentId" placeholder="请选择老人姓名" style="width: 200px;">
+                      <el-option
+                        v-for="resident in residentsList"
+                        :key="resident.id"
+                        :label="resident.name"
+                        :value="resident.id"
+                      />
+                    </el-select>
+                  </el-form-item>
+                  <el-form-item label="收缩压(mmHg)" required>
+                    <el-input-number v-model="bloodPressureForm.systolic" :min="60" :max="200" style="width: 150px;"></el-input-number>
+                  </el-form-item>
+                  <el-form-item label="舒张压(mmHg)" required>
+                    <el-input-number v-model="bloodPressureForm.diastolic" :min="40" :max="120" style="width: 150px;"></el-input-number>
+                  </el-form-item>
+                  <el-form-item label="测量时间">
+                    <el-date-picker v-model="bloodPressureForm.measureTime" type="datetime" format="YYYY-MM-DD HH:mm" value-format="YYYY-MM-DD HH:mm:ss" placeholder="选择测量时间"></el-date-picker>
+                  </el-form-item>
+                  <el-form-item label="测量备注">
+                    <el-input v-model="bloodPressureForm.notes" type="textarea" :rows="3" placeholder="请输入备注信息"></el-input>
+                  </el-form-item>
+                  <el-form-item>
+                    <el-button type="primary" @click="saveBloodPressure">保存记录</el-button>
+                  </el-form-item>
+                </el-form>
+                
+                <!-- 血压记录列表 -->
+                <div class="record-list">
+                  <h4>近期记录</h4>
+                  <el-table :data="bloodPressureRecords" stripe style="width: 100%;" max-height="300">
+                    <el-table-column prop="measureTime" label="测量时间" width="180" />
+                    <el-table-column label="血压值" width="150">
+                      <template #default="scope">
+                        <span :class="getBloodPressureClass(scope.row)">{{ scope.row.systolic }}/{{ scope.row.diastolic }} mmHg</span>
+                      </template>
+                    </el-table-column>
+                    <el-table-column prop="notes" label="备注" />
+                  </el-table>
                 </div>
               </div>
             </el-tab-pane>
@@ -120,38 +64,51 @@
             <!-- 血糖记录 -->
             <el-tab-pane label="血糖记录" name="bloodSugar">
               <div class="tab-content">
-                <div class="form-container">
-                  <el-form :model="bloodSugarForm" label-width="120px" class="health-form">
-                    <el-form-item label="老人姓名" required>
-                      <el-select v-model="bloodSugarForm.residentId" placeholder="请选择老人姓名" style="width: 200px;">
-                        <el-option
-                          v-for="resident in residentsList"
-                          :key="resident.id"
-                          :label="resident.name"
-                          :value="resident.id"
-                        />
-                      </el-select>
-                    </el-form-item>
-                    <el-form-item label="血糖值(mmol/L)" required>
-                      <el-input-number v-model="bloodSugarForm.level" :min="2" :max="30" :step="0.1" style="width: 150px;"></el-input-number>
-                    </el-form-item>
-                    <el-form-item label="测量时间">
-                      <el-date-picker v-model="bloodSugarForm.measureTime" type="datetime" format="YYYY-MM-DD HH:mm" value-format="YYYY-MM-DD HH:mm:ss" placeholder="选择测量时间"></el-date-picker>
-                    </el-form-item>
-                    <el-form-item label="测量状态">
-                      <el-radio-group v-model="bloodSugarForm.status">
-                        <el-radio label="空腹" />
-                        <el-radio label="餐后" />
-                        <el-radio label="随机" />
-                      </el-radio-group>
-                    </el-form-item>
-                    <el-form-item label="测量备注">
-                      <el-input v-model="bloodSugarForm.notes" type="textarea" :rows="3" placeholder="请输入备注信息"></el-input>
-                    </el-form-item>
-                    <el-form-item>
-                      <el-button type="primary" @click="saveBloodSugar">保存记录</el-button>
-                    </el-form-item>
-                  </el-form>
+                <el-form :model="bloodSugarForm" label-width="120px" class="health-form">
+                  <el-form-item label="老人姓名" required>
+                    <el-select v-model="bloodSugarForm.residentId" placeholder="请选择老人姓名" style="width: 200px;">
+                      <el-option
+                        v-for="resident in residentsList"
+                        :key="resident.id"
+                        :label="resident.name"
+                        :value="resident.id"
+                      />
+                    </el-select>
+                  </el-form-item>
+                  <el-form-item label="血糖值(mmol/L)" required>
+                    <el-input-number v-model="bloodSugarForm.level" :min="2" :max="30" :step="0.1" style="width: 150px;"></el-input-number>
+                  </el-form-item>
+                  <el-form-item label="测量时间">
+                    <el-date-picker v-model="bloodSugarForm.measureTime" type="datetime" format="YYYY-MM-DD HH:mm" value-format="YYYY-MM-DD HH:mm:ss" placeholder="选择测量时间"></el-date-picker>
+                  </el-form-item>
+                  <el-form-item label="测量状态">
+                    <el-radio-group v-model="bloodSugarForm.status">
+                      <el-radio label="空腹" />
+                      <el-radio label="餐后" />
+                      <el-radio label="随机" />
+                    </el-radio-group>
+                  </el-form-item>
+                  <el-form-item label="测量备注">
+                    <el-input v-model="bloodSugarForm.notes" type="textarea" :rows="3" placeholder="请输入备注信息"></el-input>
+                  </el-form-item>
+                  <el-form-item>
+                    <el-button type="primary" @click="saveBloodSugar">保存记录</el-button>
+                  </el-form-item>
+                </el-form>
+                
+                <!-- 血糖记录列表 -->
+                <div class="record-list">
+                  <h4>近期记录</h4>
+                  <el-table :data="bloodSugarRecords" stripe style="width: 100%;" max-height="300">
+                    <el-table-column prop="measureTime" label="测量时间" width="180" />
+                    <el-table-column label="血糖值" width="120">
+                      <template #default="scope">
+                        <span :class="getBloodSugarClass(scope.row)">{{ scope.row.level }} mmol/L</span>
+                      </template>
+                    </el-table-column>
+                    <el-table-column prop="status" label="测量状态" width="100" />
+                    <el-table-column prop="notes" label="备注" />
+                  </el-table>
                 </div>
               </div>
             </el-tab-pane>
@@ -159,104 +116,48 @@
             <!-- 心率记录 -->
             <el-tab-pane label="心率记录" name="heartRate">
               <div class="tab-content">
-                <div class="form-container">
-                  <el-form :model="heartRateForm" label-width="120px" class="health-form">
-                    <el-form-item label="老人姓名" required>
-                      <el-select v-model="heartRateForm.residentId" placeholder="请选择老人姓名" style="width: 200px;">
-                        <el-option
-                          v-for="resident in residentsList"
-                          :key="resident.id"
-                          :label="resident.name"
-                          :value="resident.id"
-                        />
-                      </el-select>
-                    </el-form-item>
-                    <el-form-item label="心率值(次/分)" required>
-                      <el-input-number v-model="heartRateForm.rate" :min="40" :max="200" style="width: 150px;"></el-input-number>
-                    </el-form-item>
-                    <el-form-item label="测量时间">
-                      <el-date-picker v-model="heartRateForm.measureTime" type="datetime" format="YYYY-MM-DD HH:mm" value-format="YYYY-MM-DD HH:mm:ss" placeholder="选择测量时间"></el-date-picker>
-                    </el-form-item>
-                    <el-form-item label="测量备注">
-                      <el-input v-model="heartRateForm.notes" type="textarea" :rows="3" placeholder="请输入备注信息"></el-input>
-                    </el-form-item>
-                    <el-form-item>
-                      <el-button type="primary" @click="saveHeartRate">保存记录</el-button>
-                    </el-form-item>
-                  </el-form>
+                <el-form :model="heartRateForm" label-width="120px" class="health-form">
+                  <el-form-item label="老人姓名" required>
+                    <el-select v-model="heartRateForm.residentId" placeholder="请选择老人姓名" style="width: 200px;">
+                      <el-option
+                        v-for="resident in residentsList"
+                        :key="resident.id"
+                        :label="resident.name"
+                        :value="resident.id"
+                      />
+                    </el-select>
+                  </el-form-item>
+                  <el-form-item label="心率值(次/分)" required>
+                    <el-input-number v-model="heartRateForm.rate" :min="40" :max="200" style="width: 150px;"></el-input-number>
+                  </el-form-item>
+                  <el-form-item label="测量时间">
+                    <el-date-picker v-model="heartRateForm.measureTime" type="datetime" format="YYYY-MM-DD HH:mm" value-format="YYYY-MM-DD HH:mm:ss" placeholder="选择测量时间"></el-date-picker>
+                  </el-form-item>
+                  <el-form-item label="测量备注">
+                    <el-input v-model="heartRateForm.notes" type="textarea" :rows="3" placeholder="请输入备注信息"></el-input>
+                  </el-form-item>
+                  <el-form-item>
+                    <el-button type="primary" @click="saveHeartRate">保存记录</el-button>
+                  </el-form-item>
+                </el-form>
+                
+                <!-- 心率记录列表 -->
+                <div class="record-list">
+                  <h4>近期记录</h4>
+                  <el-table :data="heartRateRecords" stripe style="width: 100%;" max-height="300">
+                    <el-table-column prop="measureTime" label="测量时间" width="180" />
+                    <el-table-column label="心率值" width="120">
+                      <template #default="scope">
+                        <span :class="getHeartRateClass(scope.row)">{{ scope.row.rate }} 次/分</span>
+                      </template>
+                    </el-table-column>
+                    <el-table-column prop="notes" label="备注" />
+                  </el-table>
                 </div>
               </div>
             </el-tab-pane>
-          </el-tabs>
-        </div>
-      </div>
-      
-      <!-- 健康数据历史记录 -->
-      <div class="card">
-        <div class="card-header">
-          <h3 class="card-title">健康数据历史记录</h3>
-          <el-button type="primary" @click="exportData">
-            <el-icon><Download /></el-icon>
-            导出数据
-          </el-button>
-        </div>
-        
-        <div class="card-body">
-          <el-tabs v-model="historyTab" class="history-tabs">
-            <!-- 血压历史 -->
-            <el-tab-pane label="血压历史" name="bloodPressureHistory">
-              <el-table :data="bloodPressureRecords" stripe style="width: 100%;">
-                <el-table-column prop="measureTime" label="测量时间" width="180" />
-                <el-table-column label="血压值" width="150">
-                  <template #default="scope">
-                    <span :class="getBloodPressureClass(scope.row)">{{ scope.row.systolic }}/{{ scope.row.diastolic }} mmHg</span>
-                  </template>
-                </el-table-column>
-                <el-table-column label="状态" width="100">
-                  <template #default="scope">
-                    <span :class="getBloodPressureStatusClass(scope.row)">{{ getBloodPressureStatus(scope.row) }}</span>
-                  </template>
-                </el-table-column>
-                <el-table-column prop="notes" label="备注" />
-              </el-table>
-            </el-tab-pane>
             
-            <!-- 血糖历史 -->
-            <el-tab-pane label="血糖历史" name="bloodSugarHistory">
-              <el-table :data="bloodSugarRecords" stripe style="width: 100%;">
-                <el-table-column prop="measureTime" label="测量时间" width="180" />
-                <el-table-column label="血糖值" width="120">
-                  <template #default="scope">
-                    <span :class="getBloodSugarClass(scope.row)">{{ scope.row.level }} mmol/L</span>
-                  </template>
-                </el-table-column>
-                <el-table-column prop="status" label="测量状态" width="100" />
-                <el-table-column label="状态" width="100">
-                  <template #default="scope">
-                    <span :class="getBloodSugarStatusClass(scope.row)">{{ getBloodSugarStatus(scope.row) }}</span>
-                  </template>
-                </el-table-column>
-                <el-table-column prop="notes" label="备注" />
-              </el-table>
-            </el-tab-pane>
-            
-            <!-- 心率历史 -->
-            <el-tab-pane label="心率历史" name="heartRateHistory">
-              <el-table :data="heartRateRecords" stripe style="width: 100%;">
-                <el-table-column prop="measureTime" label="测量时间" width="180" />
-                <el-table-column label="心率值" width="120">
-                  <template #default="scope">
-                    <span :class="getHeartRateClass(scope.row)">{{ scope.row.rate }} 次/分</span>
-                  </template>
-                </el-table-column>
-                <el-table-column label="状态" width="100">
-                  <template #default="scope">
-                    <span :class="getHeartRateStatusClass(scope.row)">{{ getHeartRateStatus(scope.row) }}</span>
-                  </template>
-                </el-table-column>
-                <el-table-column prop="notes" label="备注" />
-              </el-table>
-            </el-tab-pane>
+
           </el-tabs>
         </div>
       </div>
@@ -297,7 +198,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Refresh, Warning, Link, Download } from '@element-plus/icons-vue'
+import { Refresh } from '@element-plus/icons-vue'
 // 导入健康监测相关API
 import {
   getBloodPressureRecords,
@@ -312,31 +213,9 @@ import {
 
 // 标签页切换
 const activeTab = ref('bloodPressure')
-const historyTab = ref('bloodPressureHistory')
 
 // 老人列表
 const residentsList = ref([])
-
-// 当前日期
-const currentDate = ref(new Date().toISOString().slice(0, 10))
-
-// 显示录入表单
-const showInputForm = ref(false)
-
-// 今日健康数据
-const todayBloodPressure = reactive({
-  systolic: 120,
-  diastolic: 80
-})
-
-const todayBloodSugar = reactive({
-  level: 5.6,
-  status: '空腹'
-})
-
-const todayHeartRate = reactive({
-  rate: 75
-})
 
 // 血压记录表单
 const bloodPressureForm = reactive({
@@ -467,14 +346,6 @@ const fetchHealthAlerts = async () => {
   }
 }
 
-// 获取每日数据
-const fetchDailyData = () => {
-  // 这里可以根据选择的日期获取对应的数据
-  console.log('获取日期数据:', currentDate.value)
-  // 暂时使用模拟数据
-  ElMessage.info('已切换到 ' + currentDate.value + ' 的数据')
-}
-
 // 保存血压记录
 const saveBloodPressure = async () => {
   if (!bloodPressureForm.residentId || !bloodPressureForm.systolic || !bloodPressureForm.diastolic) {
@@ -488,10 +359,6 @@ const saveBloodPressure = async () => {
       ElMessage.success(response.data.message || '血压记录保存成功')
       fetchBloodPressureRecords()
       fetchHealthAlerts()
-      
-      // 更新今日数据
-      todayBloodPressure.systolic = bloodPressureForm.systolic
-      todayBloodPressure.diastolic = bloodPressureForm.diastolic
       
       // 重置表单
       Object.assign(bloodPressureForm, {
@@ -524,10 +391,6 @@ const saveBloodSugar = async () => {
       fetchBloodSugarRecords()
       fetchHealthAlerts()
       
-      // 更新今日数据
-      todayBloodSugar.level = bloodSugarForm.level
-      todayBloodSugar.status = bloodSugarForm.status
-      
       // 重置表单
       Object.assign(bloodSugarForm, {
         residentId: '',
@@ -559,9 +422,6 @@ const saveHeartRate = async () => {
       fetchHeartRateRecords()
       fetchHealthAlerts()
       
-      // 更新今日数据
-      todayHeartRate.rate = heartRateForm.rate
-      
       // 重置表单
       Object.assign(heartRateForm, {
         residentId: '',
@@ -588,26 +448,6 @@ const getBloodPressureClass = (row) => {
   return 'blood-pressure-normal'
 }
 
-// 获取血压状态
-const getBloodPressureStatus = (row) => {
-  if (row.systolic > 140 || row.diastolic > 90) {
-    return '偏高'
-  } else if (row.systolic < 90 || row.diastolic < 60) {
-    return '偏低'
-  }
-  return '正常'
-}
-
-// 获取血压状态样式
-const getBloodPressureStatusClass = (row) => {
-  if (row.systolic > 140 || row.diastolic > 90) {
-    return 'status-high'
-  } else if (row.systolic < 90 || row.diastolic < 60) {
-    return 'status-low'
-  }
-  return 'status-normal'
-}
-
 // 获取血糖值样式
 const getBloodSugarClass = (row) => {
   if ((row.status === '空腹' && row.level > 7.0) || 
@@ -619,28 +459,6 @@ const getBloodSugarClass = (row) => {
   return 'blood-sugar-normal'
 }
 
-// 获取血糖状态
-const getBloodSugarStatus = (row) => {
-  if ((row.status === '空腹' && row.level > 7.0) || 
-      (row.status === '餐后' && row.level > 10.0)) {
-    return '偏高'
-  } else if (row.level < 3.9) {
-    return '偏低'
-  }
-  return '正常'
-}
-
-// 获取血糖状态样式
-const getBloodSugarStatusClass = (row) => {
-  if ((row.status === '空腹' && row.level > 7.0) || 
-      (row.status === '餐后' && row.level > 10.0)) {
-    return 'status-high'
-  } else if (row.level < 3.9) {
-    return 'status-low'
-  }
-  return 'status-normal'
-}
-
 // 获取心率值样式
 const getHeartRateClass = (row) => {
   if (row.rate > 100) {
@@ -649,26 +467,6 @@ const getHeartRateClass = (row) => {
     return 'heart-rate-low'
   }
   return 'heart-rate-normal'
-}
-
-// 获取心率状态
-const getHeartRateStatus = (row) => {
-  if (row.rate > 100) {
-    return '偏快'
-  } else if (row.rate < 60) {
-    return '偏慢'
-  }
-  return '正常'
-}
-
-// 获取心率状态样式
-const getHeartRateStatusClass = (row) => {
-  if (row.rate > 100) {
-    return 'status-high'
-  } else if (row.rate < 60) {
-    return 'status-low'
-  }
-  return 'status-normal'
 }
 
 // 检查所有健康数据
@@ -687,15 +485,7 @@ const removeAlert = (index) => {
   healthAlerts.value.splice(index, 1)
 }
 
-// 切换录入表单
-const toggleInputForm = () => {
-  showInputForm.value = !showInputForm.value
-}
 
-// 导出数据
-const exportData = () => {
-  ElMessage.success('数据导出功能开发中')
-}
 
 // 组件挂载时获取数据
 onMounted(() => {
@@ -779,19 +569,24 @@ onMounted(() => {
 }
 
 .tab-content {
+  display: flex;
+  gap: 24px;
   margin-top: 20px;
 }
 
-.form-container {
-  width: 100%;
-}
-
 .health-form {
-  width: 100%;
+  flex: 1;
 }
 
-.history-tabs {
-  width: 100%;
+.record-list {
+  flex: 1;
+}
+
+.record-list h4 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
 }
 
 .alerts-container {
@@ -807,118 +602,6 @@ onMounted(() => {
 
 .health-alert {
   width: 100%;
-}
-
-/* 日期选择器 */
-.date-picker {
-  width: 180px;
-}
-
-/* 每日健康数据概览 */
-.daily-overview {
-  display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-
-.overview-card {
-  flex: 1;
-  min-width: 280px;
-  padding: 24px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  transition: all 0.3s ease;
-}
-
-.overview-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-}
-
-.blood-pressure-card {
-  background: linear-gradient(135deg, #fef0f0 0%, #fde2e2 100%);
-  border: 1px solid #fbc4c4;
-}
-
-.blood-sugar-card {
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-  border: 1px solid #93c5fd;
-}
-
-.heart-rate-card {
-  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-  border: 1px solid #86efac;
-}
-
-.overview-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-}
-
-.blood-pressure-icon {
-  background: #fee2e2;
-  color: #dc2626;
-  border: 2px solid #fca5a5;
-}
-
-.blood-sugar-icon {
-  background: #dbeafe;
-  color: #2563eb;
-  border: 2px solid #93c5fd;
-}
-
-.heart-rate-icon {
-  background: #dcfce7;
-  color: #16a34a;
-  border: 2px solid #86efac;
-}
-
-.overview-content {
-  flex: 1;
-}
-
-.overview-content h4 {
-  font-size: 18px;
-  font-weight: 600;
-  margin: 0 0 8px 0;
-  color: #374151;
-}
-
-.overview-value {
-  font-size: 24px;
-  font-weight: 700;
-  margin-bottom: 4px;
-}
-
-.overview-status {
-  font-size: 14px;
-  font-weight: 500;
-  padding: 4px 12px;
-  border-radius: 12px;
-  display: inline-block;
-}
-
-/* 状态样式 */
-.status-normal {
-  color: #16a34a;
-  background: #dcfce7;
-}
-
-.status-high {
-  color: #dc2626;
-  background: #fee2e2;
-}
-
-.status-low {
-  color: #d97706;
-  background: #fef3c7;
 }
 
 /* 健康数据样式 */
@@ -969,12 +652,8 @@ onMounted(() => {
 
 /* 响应式设计 */
 @media (max-width: 1200px) {
-  .daily-overview {
+  .tab-content {
     flex-direction: column;
-  }
-  
-  .overview-card {
-    min-width: 100%;
   }
 }
 
@@ -996,25 +675,6 @@ onMounted(() => {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
-  }
-  
-  .date-picker {
-    width: 100%;
-  }
-  
-  .overview-card {
-    padding: 16px;
-    gap: 16px;
-  }
-  
-  .overview-icon {
-    width: 50px;
-    height: 50px;
-    font-size: 20px;
-  }
-  
-  .overview-value {
-    font-size: 20px;
   }
 }
 </style>
