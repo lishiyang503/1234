@@ -54,3 +54,12 @@ export const getPurchaseRecords = (params) => {
     params
   })
 }
+
+// 创建服务购买记录
+export const createPurchaseRecord = (data) => {
+  return request({
+    url: '/service/purchase',
+    method: 'post',
+    data
+  })
+}

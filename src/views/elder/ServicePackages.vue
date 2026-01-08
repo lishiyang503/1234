@@ -40,48 +40,48 @@
         </template>
         <div class="packages-list">
           <el-card
-            v-for="package in filteredPackages"
-            :key="package.id"
+            v-for="pkg in filteredPackages"
+            :key="pkg.id"
             class="package-item"
-            @click="viewPackageDetails(package)"
+            @click="viewPackageDetails(pkg)"
           >
             <div class="package-header">
               <div class="package-title">
-                <h3>{{ package.name }}</h3>
-                <span class="package-code">{{ package.code }}</span>
+                <h3>{{ pkg.name }}</h3>
+                <span class="package-code">{{ pkg.code }}</span>
               </div>
               <div class="package-price">
-                ¥{{ package.price }}/{{ package.unit }}
+                ¥{{ pkg.price }}/{{ pkg.unit }}
               </div>
             </div>
             <div class="package-description">
-              {{ package.description }}
+              {{ pkg.description }}
             </div>
             <div class="package-features">
-              <div class="feature-item" v-for="(feature, index) in package.features.slice(0, 3)" :key="index">
+              <div class="feature-item" v-for="(feature, index) in pkg.features.slice(0, 3)" :key="index">
                 <el-icon class="feature-icon"><Check /></el-icon>
                 <span>{{ feature }}</span>
               </div>
-              <div v-if="package.features.length > 3" class="feature-more">
-                +{{ package.features.length - 3 }} 更多服务
+              <div v-if="pkg.features.length > 3" class="feature-more">
+                +{{ pkg.features.length - 3 }} 更多服务
               </div>
             </div>
             <div class="package-info">
               <div class="info-item">
                 <el-icon><Timer /></el-icon>
-                <span>服务时长：{{ package.duration }} {{ package.durationUnit }}</span>
+                <span>服务时长：{{ pkg.duration }} {{ pkg.durationUnit }}</span>
               </div>
               <div class="info-item">
                 <el-icon><Star /></el-icon>
-                <span>满意度：{{ package.satisfactionRate }}%</span>
+                <span>满意度：{{ pkg.satisfactionRate }}%</span>
               </div>
             </div>
             <div class="package-actions">
-              <el-button type="primary" size="small" @click.stop="orderPackage(package)">
+              <el-button type="primary" size="small" @click.stop="orderPackage(pkg)">
                 <el-icon><ShoppingCart /></el-icon>
                 立即订购
               </el-button>
-              <el-button size="small" @click.stop="viewPackageDetails(package)">
+              <el-button size="small" @click.stop="viewPackageDetails(pkg)">
                 <el-icon><View /></el-icon>
                 查看详情
               </el-button>

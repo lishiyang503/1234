@@ -235,6 +235,9 @@ import {
   View
 } from '@element-plus/icons-vue'
 
+// 导入护理记录相关API
+import { getNursingRecords, getNursingRecordDetail } from '@/api/nursing'
+
 const filterForm = ref({
   dateRange: null,
   nursingType: '',
@@ -245,117 +248,8 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const dialogVisible = ref(false)
 const selectedRecord = ref(null)
-
-const nursingRecords = ref([
-  {
-    id: 1,
-    contentName: '个人卫生护理',
-    recordTime: '2024-01-07 08:30',
-    nurseName: '张护士',
-    estimatedDuration: 30,
-    duration: 35,
-    status: 'COMPLETED',
-    description: '完成了洗脸、刷牙、梳头、剃须、洗脚等个人卫生护理服务，老人配合度良好。',
-    notes: '老人皮肤较为干燥，已使用保湿乳液。',
-    nurseEvaluation: '老人状态良好，配合度高，护理过程顺利。',
-    evaluationDate: '2024-01-07',
-    serviceRating: 5,
-    serviceComment: '护理人员服务态度很好，专业技能强，非常满意。'
-  },
-  {
-    id: 2,
-    contentName: '康复训练',
-    recordTime: '2024-01-07 09:30',
-    nurseName: '李康复师',
-    estimatedDuration: 60,
-    duration: 55,
-    status: 'COMPLETED',
-    description: '进行了肢体功能训练、关节活动、肌力训练等康复护理服务。',
-    notes: '老人左侧肢体活动度有所改善，继续加强训练。',
-    nurseEvaluation: '老人训练积极性高，进步明显，建议继续保持。',
-    evaluationDate: '2024-01-07',
-    serviceRating: 5,
-    serviceComment: '康复师专业水平高，训练计划合理，效果明显。'
-  },
-  {
-    id: 3,
-    contentName: '药物护理',
-    recordTime: '2024-01-07 15:00',
-    nurseName: '王护士',
-    estimatedDuration: 20,
-    duration: 20,
-    status: 'COMPLETED',
-    description: '协助老人服用下午药物，包括降压药和降糖药。',
-    notes: '老人按时服药，无不良反应。',
-    nurseEvaluation: '老人服药依从性好，药物管理规范。',
-    evaluationDate: '2024-01-07'
-  },
-  {
-    id: 4,
-    contentName: '饮食护理',
-    recordTime: '2024-01-07 18:00',
-    nurseName: '张护士',
-    estimatedDuration: 45,
-    duration: 40,
-    status: 'COMPLETED',
-    description: '协助老人晚餐进食、饮水，老人食欲良好。',
-    notes: '老人晚餐进食量正常，无不适。',
-    nurseEvaluation: '老人饮食情况良好，营养摄入均衡。',
-    evaluationDate: '2024-01-07'
-  },
-  {
-    id: 5,
-    contentName: '心理疏导',
-    recordTime: '2024-01-06 14:00',
-    nurseName: '刘心理咨询师',
-    estimatedDuration: 40,
-    duration: 45,
-    status: 'COMPLETED',
-    description: '与老人进行心理沟通，情绪安抚，心理支持等心理护理服务。',
-    notes: '老人近期因思念家人情绪低落，已进行安抚。',
-    nurseEvaluation: '老人情绪有所好转，建议多安排家属探视。',
-    evaluationDate: '2024-01-06',
-    serviceRating: 4,
-    serviceComment: '心理咨询师很专业，耐心倾听，给予了很好的建议。'
-  },
-  {
-    id: 6,
-    contentName: '个人卫生护理',
-    recordTime: '2024-01-06 08:30',
-    nurseName: '张护士',
-    estimatedDuration: 30,
-    duration: 32,
-    status: 'COMPLETED',
-    description: '完成了洗脸、刷牙、梳头、剃须、洗脚等个人卫生护理服务。',
-    notes: '老人睡眠质量良好，精神状态佳。',
-    nurseEvaluation: '老人状态良好，护理过程顺利。',
-    evaluationDate: '2024-01-06'
-  },
-  {
-    id: 7,
-    contentName: '康复训练',
-    recordTime: '2024-01-06 09:30',
-    nurseName: '李康复师',
-    estimatedDuration: 60,
-    duration: 58,
-    status: 'COMPLETED',
-    description: '进行了肢体功能训练、关节活动、肌力训练等康复护理服务。',
-    notes: '老人训练效果良好，建议增加训练强度。',
-    nurseEvaluation: '老人训练积极性高，进步明显。',
-    evaluationDate: '2024-01-06'
-  },
-  {
-    id: 8,
-    contentName: '药物护理',
-    recordTime: '2024-01-08 08:00',
-    nurseName: '王护士',
-    estimatedDuration: 20,
-    duration: 0,
-    status: 'PENDING',
-    description: '协助老人服用早晨药物，包括降压药和降糖药。',
-    notes: ''
-  }
-])
+const nursingRecords = ref([])
+const loading = ref(false)
 
 const totalRecords = computed(() => nursingRecords.value.length)
 const completedRecords = computed(() => nursingRecords.value.filter(record => record.status === 'COMPLETED').length)
@@ -378,9 +272,62 @@ const filteredRecords = computed(() => {
 
 const total = computed(() => filteredRecords.value.length)
 
+// 获取护理记录列表
+const fetchNursingRecords = async () => {
+  loading.value = true
+  try {
+    const params = {
+      page: currentPage.value,
+      pageSize: pageSize.value
+    }
+    
+    // 添加筛选条件
+    if (filterForm.value.dateRange) {
+      params.startDate = filterForm.value.dateRange[0]
+      params.endDate = filterForm.value.dateRange[1]
+    }
+    
+    if (filterForm.value.nursingType) {
+      params.nursingType = filterForm.value.nursingType
+    }
+    
+    if (filterForm.value.status) {
+      params.status = filterForm.value.status
+    }
+    
+    const response = await getNursingRecords(params)
+    if (response.data && response.data.success) {
+      // 处理后端返回的数据，确保格式正确
+      const records = response.data.data.list || []
+      nursingRecords.value = records.map(record => ({
+        id: record.id,
+        contentName: record.contentName || record.content_name,
+        recordTime: record.recordTime || record.record_time,
+        nurseName: record.nurseName || record.nurse_name,
+        estimatedDuration: record.estimatedDuration || record.estimated_duration,
+        duration: record.duration,
+        status: record.status,
+        description: record.description,
+        notes: record.notes,
+        nurseEvaluation: record.nurseEvaluation || record.nurse_evaluation,
+        evaluationDate: record.evaluationDate || record.evaluation_date,
+        serviceRating: record.serviceRating || record.service_rating,
+        serviceComment: record.serviceComment || record.service_comment
+      }))
+    } else {
+      ElMessage.error('获取护理记录失败')
+    }
+  } catch (error) {
+    ElMessage.error('获取护理记录失败')
+    console.error('获取护理记录失败:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
 const handleFilter = () => {
-  ElMessage.info('执行查询')
-  // 这里可以根据筛选条件调用API获取数据
+  currentPage.value = 1
+  fetchNursingRecords()
 }
 
 const resetFilter = () => {
@@ -389,21 +336,49 @@ const resetFilter = () => {
     nursingType: '',
     status: ''
   }
-  ElMessage.info('筛选条件已重置')
+  currentPage.value = 1
+  fetchNursingRecords()
 }
 
 const handleSizeChange = (size) => {
   pageSize.value = size
   currentPage.value = 1
+  fetchNursingRecords()
 }
 
 const handleCurrentChange = (current) => {
   currentPage.value = current
+  fetchNursingRecords()
 }
 
-const viewRecordDetails = (record) => {
-  selectedRecord.value = record
-  dialogVisible.value = true
+const viewRecordDetails = async (record) => {
+  try {
+    const response = await getNursingRecordDetail(record.id)
+    if (response.data && response.data.success) {
+      const recordData = response.data.data
+      selectedRecord.value = {
+        id: recordData.id,
+        contentName: recordData.contentName || recordData.content_name,
+        recordTime: recordData.recordTime || recordData.record_time,
+        nurseName: recordData.nurseName || recordData.nurse_name,
+        estimatedDuration: recordData.estimatedDuration || recordData.estimated_duration,
+        duration: recordData.duration,
+        status: recordData.status,
+        description: recordData.description,
+        notes: recordData.notes,
+        nurseEvaluation: recordData.nurseEvaluation || recordData.nurse_evaluation,
+        evaluationDate: recordData.evaluationDate || recordData.evaluation_date,
+        serviceRating: recordData.serviceRating || recordData.service_rating,
+        serviceComment: recordData.serviceComment || recordData.service_comment
+      }
+      dialogVisible.value = true
+    } else {
+      ElMessage.error('获取护理记录详情失败')
+    }
+  } catch (error) {
+    ElMessage.error('获取护理记录详情失败')
+    console.error('获取护理记录详情失败:', error)
+  }
 }
 
 const getTagType = (status) => {
@@ -434,7 +409,7 @@ const getStatusText = (status) => {
 
 onMounted(() => {
   // 初始化加载数据
-  console.log('Nursing records page mounted')
+  fetchNursingRecords()
 })
 </script>
 

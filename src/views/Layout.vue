@@ -232,7 +232,6 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowDown } from '@element-plus/icons-vue'
 import FloatingNursingPanel from '@/components/FloatingNursingPanel.vue'
 import {
   House,

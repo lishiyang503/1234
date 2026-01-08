@@ -235,6 +235,9 @@ import {
   Clock
 } from '@element-plus/icons-vue'
 
+// 导入护理相关API
+import { getNursingContents } from '@/api/nursing'
+
 const activeCategoryId = ref(null)
 const selectedContent = ref(null)
 const selectedDate = ref(new Date())
@@ -247,122 +250,35 @@ const nursingCategories = ref([
   { id: 5, name: '特殊护理', icon: 'Warning' }
 ])
 
-const nursingContents = ref([
-  {
-    id: 1,
-    code: 'NC-001',
-    name: '个人卫生护理',
-    categoryId: 1,
-    status: 'ACTIVE',
-    description: '包括洗脸、刷牙、梳头、剃须、洗脚等个人卫生护理服务。',
-    estimatedDuration: 30,
-    frequency: '每日一次',
-    procedure: [
-      '准备护理用品',
-      '协助老人洗脸',
-      '协助老人刷牙',
-      '协助老人梳头',
-      '协助老人剃须（男性）',
-      '协助老人洗脚',
-      '整理护理用品'
-    ],
-    notes: [
-      '动作要轻柔，避免弄伤老人',
-      '注意保暖，避免老人受凉',
-      '尊重老人隐私，保护老人尊严'
-    ]
-  },
-  {
-    id: 2,
-    code: 'NC-002',
-    name: '饮食护理',
-    categoryId: 1,
-    status: 'ACTIVE',
-    description: '包括协助进食、饮水、喂食等饮食护理服务。',
-    estimatedDuration: 45,
-    frequency: '每日三次',
-    procedure: [
-      '准备餐食',
-      '协助老人洗手',
-      '协助老人进食',
-      '协助老人饮水',
-      '清理餐具',
-      '记录进食情况'
-    ],
-    notes: [
-      '注意饮食温度，避免烫伤',
-      '根据老人饮食禁忌调整食物',
-      '进食时保持老人坐姿舒适'
-    ]
-  },
-  {
-    id: 3,
-    code: 'NC-003',
-    name: '药物护理',
-    categoryId: 2,
-    status: 'ACTIVE',
-    description: '包括药物管理、给药、用药指导等药物护理服务。',
-    estimatedDuration: 20,
-    frequency: '根据医嘱',
-    procedure: [
-      '核对药物信息',
-      '准备药物和水',
-      '协助老人服药',
-      '观察用药反应',
-      '记录用药情况'
-    ],
-    notes: [
-      '严格按照医嘱给药',
-      '注意药物有效期',
-      '观察老人用药后的反应'
-    ]
-  },
-  {
-    id: 4,
-    code: 'NC-004',
-    name: '康复训练',
-    categoryId: 3,
-    status: 'ACTIVE',
-    description: '包括肢体功能训练、关节活动、肌力训练等康复护理服务。',
-    estimatedDuration: 60,
-    frequency: '每日两次',
-    procedure: [
-      '评估老人身体状况',
-      '制定训练计划',
-      '协助老人进行训练',
-      '观察训练反应',
-      '调整训练强度',
-      '记录训练情况'
-    ],
-    notes: [
-      '根据老人身体状况调整训练强度',
-      '训练过程中注意安全',
-      '避免过度训练造成伤害'
-    ]
-  },
-  {
-    id: 5,
-    code: 'NC-005',
-    name: '心理疏导',
-    categoryId: 4,
-    status: 'ACTIVE',
-    description: '包括心理沟通、情绪安抚、心理支持等心理护理服务。',
-    estimatedDuration: 40,
-    frequency: '每周两次',
-    procedure: [
-      '与老人建立信任关系',
-      '倾听老人心声',
-      '进行心理疏导',
-      '提供情绪支持',
-      '鼓励老人积极面对生活'
-    ],
-    notes: [
-      '尊重老人感受',
-      '保护老人隐私',
-      '避免提及敏感话题'
-    ]
+const nursingContents = ref([])
+
+// 获取护理内容列表
+const fetchNursingContents = async () => {
+  try {
+    const response = await getNursingContents()
+    if (response.data && response.data.success) {
+      // 处理后端返回的数据，确保格式正确
+      const contents = response.data.data.list || []
+      nursingContents.value = contents.map(content => ({
+        id: content.id,
+        code: content.code,
+        name: content.name,
+        categoryId: content.categoryId || content.category_id,
+        status: content.status,
+        description: content.description,
+        estimatedDuration: content.estimatedDuration || content.estimated_duration,
+        frequency: content.frequency,
+        procedure: content.procedure ? content.procedure.split(';').filter(p => p.trim()) : [],
+        notes: content.notes ? content.notes.split(';').filter(n => n.trim()) : []
+      }))
+    } else {
+      ElMessage.error('获取护理内容列表失败')
+    }
+  } catch (error) {
+    ElMessage.error('获取护理内容列表失败')
+    console.error('获取护理内容列表失败:', error)
   }
-])
+}
 
 const dailyPlan = ref([
   {
@@ -462,6 +378,8 @@ onMounted(() => {
   if (nursingCategories.value.length > 0) {
     activeCategoryId.value = nursingCategories.value[0].id
   }
+  // 初始化加载护理内容
+  fetchNursingContents()
   // 初始化加载当天护理计划
   fetchPlanForDate()
 })
@@ -517,9 +435,15 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 20px;
+  padding: 12px 24px;
   border-radius: var(--border-radius);
   transition: all 0.3s ease;
+  min-width: 140px;
+  text-align: center;
+  justify-content: center;
+  white-space: nowrap;
+  overflow: visible;
+  font-size: 14px;
 }
 
 .category-button:hover {

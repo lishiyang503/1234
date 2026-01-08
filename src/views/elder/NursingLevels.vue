@@ -135,7 +135,7 @@
           >
             <div class="service-header">
               <div class="service-info">
-                <h3>{{ service.nursingLevelName }}</h3>
+                <h3>{{ service.servicePackageName || service.nursingLevelName || '服务名称' }}</h3>
                 <span class="service-period">{{ service.startDate }} 至 {{ service.endDate }}</span>
               </div>
               <div class="service-status" :class="getServiceStatusClass(service.status)">
@@ -154,6 +154,10 @@
               <div class="detail-item">
                 <span class="detail-label">订单号：</span>
                 <span class="detail-value">{{ service.orderNo }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">老人姓名：</span>
+                <span class="detail-value">{{ service.residentName }}</span>
               </div>
             </div>
             <div class="service-actions">
@@ -194,7 +198,8 @@ import {
 } from '@element-plus/icons-vue'
 
 // 导入服务相关API
-import { getServicePackages } from '@/api/service'
+import { getServicePackages, createPurchaseRecord, getPurchaseRecords } from '@/api/service'
+import { getCurrentUser } from '@/api/auth'
 
 const selectedLevelId = ref(null)
 const selectedLevel = ref(null)
@@ -202,6 +207,7 @@ const loading = ref(false)
 
 const nursingLevels = ref([])
 const myServices = ref([])
+const currentUser = ref(null)
 
 // 获取护理等级列表
 const fetchNursingLevels = async () => {
@@ -231,11 +237,39 @@ const fetchNursingLevels = async () => {
   }
 }
 
+// 获取当前用户信息
+const fetchCurrentUser = async () => {
+  try {
+    const response = await getCurrentUser()
+    if (response.data && response.data.success) {
+      currentUser.value = response.data.data
+    }
+  } catch (error) {
+    console.error('获取用户信息失败:', error)
+  }
+}
+
 // 获取我的护理服务
 const fetchMyServices = async () => {
-  // 这里将来会调用API获取用户的护理服务订单
-  // 暂时使用空数组
-  myServices.value = []
+  try {
+    // 确保获取到用户信息后再请求服务记录
+    if (!currentUser.value) {
+      await fetchCurrentUser()
+    }
+    
+    const response = await getPurchaseRecords({
+      residentId: currentUser.value?.id || '',
+      residentName: currentUser.value?.realName || '',
+      page: 1,
+      pageSize: 10
+    })
+    if (response.data && response.data.success) {
+      myServices.value = response.data.data.list || []
+    }
+  } catch (error) {
+    console.error('获取我的服务失败:', error)
+    myServices.value = []
+  }
 }
 
 const selectLevel = (levelId) => {
@@ -254,7 +288,7 @@ const closeDetails = () => {
   selectedLevel.value = null
 }
 
-const orderService = (level) => {
+const orderService = async (level) => {
   ElMessageBox.confirm(
     `确定要订购 ${level.name} 服务吗？价格为 ${level.price} 元/月`,
     '订购确认',
@@ -263,9 +297,37 @@ const orderService = (level) => {
       cancelButtonText: '取消',
       type: 'warning'
     }
-  ).then(() => {
-    ElMessage.success('服务订购成功')
-    // 这里将来会调用API创建订单
+  ).then(async () => {
+    try {
+      // 准备购买记录数据
+      const purchaseData = {
+        residentId: currentUser.value?.id || 1, // 老人ID，设置默认值1
+        residentName: currentUser.value?.realName || '未知', // 老人姓名
+        roomNumber: currentUser.value?.roomNumber || '', // 房间号
+        bedNumber: currentUser.value?.bedNumber || '', // 床位号
+        serviceId: level.id, // 服务ID
+        serviceName: level.name, // 服务名称
+        serviceLevel: level.code || '', // 服务等级
+        price: level.price, // 服务价格
+        purchaseDate: new Date().toISOString().slice(0, 10), // 购买日期
+        expireDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10), // 过期日期
+        operator: currentUser.value?.realName || '未知', // 操作人
+        status: '有效' // 状态，使用后端期望的值
+      }
+      
+      // 调用API创建购买记录
+      const response = await createPurchaseRecord(purchaseData)
+      if (response.data.success) {
+        ElMessage.success('服务订购成功')
+        // 刷新我的服务列表
+        fetchMyServices()
+      } else {
+        ElMessage.error('服务订购失败：' + response.data.message)
+      }
+    } catch (error) {
+      console.error('订购服务时发生错误:', error)
+      ElMessage.error('服务订购失败，请稍后重试')
+    }
   }).catch(() => {
     ElMessage.info('已取消订购')
   })
@@ -309,6 +371,7 @@ const scrollToLevels = () => {
 
 onMounted(() => {
   // 初始化加载数据
+  fetchCurrentUser()
   fetchNursingLevels()
   fetchMyServices()
 })

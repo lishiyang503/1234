@@ -10,7 +10,7 @@
       <div class="panel-header">
         <h3>快速护理管理</h3>
         <el-button 
-          type="text" 
+          link
           @click="togglePanel"
           class="close-btn"
         >
@@ -128,6 +128,16 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getNursingLevels, getNursingContents, getNursingRecords } from '@/api/nursing'
+import {
+  House,
+  Close,
+  Rank,
+  Document,
+  EditPen,
+  Plus,
+  Check,
+  Timer
+} from '@element-plus/icons-vue'
 
 const router = useRouter()
 
