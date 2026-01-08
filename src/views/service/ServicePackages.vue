@@ -1,17 +1,17 @@
 <template>
   <div class="service-packages-container">
     <div class="page-header">
-      <h2 class="page-title">护理服务管理</h2>
-      <p class="page-subtitle">管理护理级别和服务内容</p>
+      <h2 class="page-title">服务管理</h2>
+      <p class="page-subtitle">管理服务套餐信息</p>
     </div>
     
     <div class="content-section">
       <div class="card">
         <div class="card-header">
-          <h3 class="card-title">护理级别管理</h3>
+          <h3 class="card-title">服务套餐管理</h3>
           <el-button type="primary" @click="showAddDialog">
             <el-icon><Plus /></el-icon>
-            添加护理级别
+            添加套餐
           </el-button>
         </div>
         
@@ -73,7 +73,10 @@
                 <!-- 卡片内容 -->
                 <div class="package-card-content">
                   <div class="package-name-section">
-                    <h3 class="package-name">{{ pkg.name }}</h3>
+                    <div class="name-with-tag">
+                      <h3 class="package-name">{{ pkg.name }}</h3>
+                      <el-tag v-if="pkg.id === 1" type="primary" class="recommend-tag">推荐</el-tag>
+                    </div>
                     <div class="package-price">
                       <el-icon><Money /></el-icon>
                       <span class="price">¥{{ pkg.price }}/月</span>
@@ -108,7 +111,6 @@
                       @click="showEditDialog(pkg)"
                       class="edit-btn"
                     >
-                      <el-icon><Edit /></el-icon>
                       编辑
                     </el-button>
                     <el-button 
@@ -117,7 +119,6 @@
                       @click="handleDelete(pkg.id)"
                       class="delete-btn"
                     >
-                      <el-icon><Delete /></el-icon>
                       删除
                     </el-button>
                   </div>
@@ -244,7 +245,7 @@ import {
   List,
   Calendar 
 } from '@element-plus/icons-vue'
-import { getNursingLevels, addNursingLevel, updateNursingLevel, deleteNursingLevel } from '@/api/nursing'
+import { getServicePackages, addServicePackage, updateServicePackage, deleteServicePackage, updateServicePackageStatus } from '@/api/service'
 
 // 搜索和筛选参数
 const searchParams = reactive({
@@ -306,34 +307,39 @@ const getLevelType = (level) => {
   }
 }
 
-// 获取护理级别列表
+// 获取服务套餐列表
 const fetchServicePackages = async () => {
   loading.value = true
   try {
-    const response = await getNursingLevels({
+    const response = await getServicePackages({
       ...searchParams,
       page: currentPage.value,
       pageSize: pageSize.value
     })
     
     if (response.data.success) {
-      // 转换护理级别数据为套餐格式
-      servicePackagesList.value = (response.data.data.list || []).map(level => ({
-        id: level.id,
-        name: level.name,
-        level: level.level === 1 ? '基础' : level.level === 2 ? '中级' : '高级',
-        price: level.baseCost,
-        description: level.description || '无描述',
-        features: [level.name + '护理服务'],
-        status: level.isActive ? '启用' : '禁用'
-      }))
+      // 获取原始数据
+      let packages = response.data.data.list || []
+      
+      // 定义排序规则：基础 -> 医疗照护 -> 至尊康养
+      const levelOrder = {
+        '基础': 1,
+        '医疗照护': 2,
+        '至尊康养': 3
+      }
+      
+      // 按照级别排序
+      servicePackagesList.value = packages.sort((a, b) => {
+        return (levelOrder[a.level] || 99) - (levelOrder[b.level] || 99)
+      })
+      
       total.value = response.data.data.total || 0
     } else {
-      ElMessage.error(response.data.message || '获取护理级别列表失败')
+      ElMessage.error(response.data.message || '获取服务套餐列表失败')
     }
   } catch (error) {
-    console.error('获取护理级别列表失败:', error)
-    ElMessage.error('获取护理级别列表失败，请重试')
+    console.error('获取服务套餐列表失败:', error)
+    ElMessage.error('获取服务套餐列表失败，请重试')
   } finally {
     loading.value = false
   }
@@ -359,12 +365,9 @@ const tableRowClassName = ({ row, rowIndex }) => {
 // 状态切换
 const handleStatusChange = async (row) => {
   try {
-    const response = await updateNursingLevel({
-      id: row.id,
-      isActive: row.status === '启用'
-    })
+    const response = await updateServicePackageStatus(row.id, row.status)
     if (response.data.success) {
-      ElMessage.success(`护理级别 ${row.name} 状态已更新为 ${row.status}`)
+      ElMessage.success(`套餐 ${row.name} 状态已更新为 ${row.status}`)
     } else {
       ElMessage.error(response.data.message || '状态更新失败')
       // 恢复原状态
@@ -381,7 +384,7 @@ const handleStatusChange = async (row) => {
 // 显示添加对话框
 const showAddDialog = () => {
   isEditMode.value = false
-  dialogTitle.value = '添加护理级别'
+  dialogTitle.value = '添加服务套餐'
   resetForm()
   dialogVisible.value = true
 }
@@ -389,7 +392,7 @@ const showAddDialog = () => {
 // 显示编辑对话框
 const showEditDialog = (row) => {
   isEditMode.value = true
-  dialogTitle.value = '编辑护理级别'
+  dialogTitle.value = '编辑服务套餐'
   Object.assign(serviceForm, row)
   dialogVisible.value = true
 }
@@ -416,19 +419,9 @@ const handleSubmit = async () => {
     // 表单验证
     await serviceFormRef.value.validate()
     
-    // 转换表单数据为护理级别格式
-    const nursingLevelData = {
-      id: serviceForm.id,
-      name: serviceForm.name,
-      level: serviceForm.level === '基础' ? 1 : serviceForm.level === '中级' ? 2 : 3,
-      baseCost: serviceForm.price,
-      description: serviceForm.description,
-      isActive: serviceForm.status === '启用'
-    }
-    
     if (isEditMode.value) {
-      // 编辑护理级别
-      const response = await updateNursingLevel(nursingLevelData)
+      // 编辑服务套餐
+      const response = await updateServicePackage(serviceForm)
       if (response.data.success) {
         ElMessage.success('编辑成功')
         dialogVisible.value = false
@@ -437,8 +430,8 @@ const handleSubmit = async () => {
         ElMessage.error(response.data.message || '编辑失败')
       }
     } else {
-      // 添加护理级别
-      const response = await addNursingLevel(nursingLevelData)
+      // 添加服务套餐
+      const response = await addServicePackage(serviceForm)
       if (response.data.success) {
         ElMessage.success('添加成功')
         dialogVisible.value = false
@@ -463,7 +456,7 @@ const handleDelete = (id) => {
     type: 'warning'
   }).then(async () => {
     try {
-      const response = await deleteNursingLevel(id)
+      const response = await deleteServicePackage(id)
       if (response.data.success) {
         ElMessage.success('删除成功')
         fetchServicePackages()
@@ -607,27 +600,27 @@ const handleDelete = (id) => {
 /* 套餐卡片 */
 .package-card {
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   padding: 20px;
   transition: all 0.3s ease;
-  border: 1px solid #f0f0f0;
+  border: 1px solid #e4e7ed;
   display: flex;
   flex-direction: column;
   min-height: 320px;
 }
 
 .package-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
-  border-color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  border-color: #dcdfe6;
 }
 
 /* 卡片头部 */
 .package-card-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   margin-bottom: 16px;
   padding-bottom: 12px;
   border-bottom: 1px solid #f0f0f0;
@@ -647,7 +640,9 @@ const handleDelete = (id) => {
 
 .level-tag {
   font-weight: 600;
-  padding: 4px 16px;
+  padding: 2px 8px;
+  height: auto;
+  font-size: 12px;
 }
 
 .package-status {
@@ -665,6 +660,14 @@ const handleDelete = (id) => {
 }
 
 /* 套餐名称和价格 */
+.name-with-tag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
 .package-name-section {
   text-align: center;
 }
@@ -673,7 +676,13 @@ const handleDelete = (id) => {
   font-size: 22px;
   font-weight: 600;
   color: #303133;
-  margin: 0 0 12px 0;
+  margin: 0;
+}
+
+.recommend-tag {
+  font-size: 12px;
+  padding: 2px 8px;
+  height: auto;
 }
 
 .package-price {
@@ -684,6 +693,7 @@ const handleDelete = (id) => {
   color: #f56c6c;
   font-weight: 600;
   font-size: 24px;
+  margin-bottom: 16px;
 }
 
 .package-price .el-icon {
@@ -692,10 +702,7 @@ const handleDelete = (id) => {
 
 /* 描述部分 */
 .description-section {
-  background: #f8f9ff;
-  padding: 16px;
-  border-radius: 8px;
-  border-left: 3px solid #667eea;
+  padding: 12px 0;
 }
 
 .description-title {
@@ -703,28 +710,23 @@ const handleDelete = (id) => {
   align-items: center;
   gap: 8px;
   font-weight: 600;
-  color: #667eea;
-  margin-bottom: 10px;
+  color: #606266;
+  margin-bottom: 8px;
+  font-size: 14px;
 }
 
 .description-text {
   font-size: 14px;
   color: #606266;
   line-height: 1.5;
-  max-height: 80px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
+  padding: 8px 12px;
+  background: #f5f7fa;
+  border-radius: 6px;
 }
 
 /* 服务内容部分 */
 .features-section {
-  background: #f0f9eb;
-  padding: 16px;
-  border-radius: 8px;
-  border-left: 3px solid #67c23a;
+  padding: 12px 0;
 }
 
 .features-title {
@@ -732,25 +734,23 @@ const handleDelete = (id) => {
   align-items: center;
   gap: 8px;
   font-weight: 600;
-  color: #67c23a;
-  margin-bottom: 10px;
+  color: #606266;
+  margin-bottom: 8px;
+  font-size: 14px;
 }
 
 .features-content {
   font-size: 14px;
-  line-height: 1.8;
+  line-height: 1.5;
   color: #606266;
-  white-space: pre-wrap;
-  word-break: break-word;
-  font-weight: 500;
-  background: white;
-  padding: 12px;
+  background: #f5f7fa;
+  padding: 8px 12px;
   border-radius: 6px;
-  border: 1px solid #e4e7ed;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  min-height: 120px;
-  display: flex;
-  align-items: center;
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* 卡片底部 */

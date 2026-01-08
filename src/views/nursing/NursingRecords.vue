@@ -26,16 +26,6 @@
               class="search-input"
               @keyup.enter="handleSearch"
             />
-            <el-date-picker
-              v-model="searchParams.dateRange"
-              type="daterange"
-              range-separator="至"
-              start-placeholder="开始日期"
-              end-placeholder="结束日期"
-              format="YYYY-MM-DD"
-              value-format="YYYY-MM-DD"
-              class="date-filter"
-            />
             <el-select
               v-model="searchParams.completed"
               placeholder="筛选完成状态"
@@ -172,17 +162,6 @@
           <el-input v-model="recordForm.nursingContent" placeholder="请输入护理内容" />
         </el-form-item>
         
-        <el-form-item label="执行时间" prop="executeTime">
-          <el-date-picker
-            v-model="recordForm.executeTime"
-            type="datetime"
-            format="YYYY-MM-DD HH:mm"
-            value-format="YYYY-MM-DD HH:mm"
-            placeholder="请选择执行时间"
-            style="width: 100%"
-          />
-        </el-form-item>
-        
         <el-form-item label="执行人" prop="executor">
           <el-input v-model="recordForm.executor" placeholder="请输入执行人姓名" />
         </el-form-item>
@@ -192,6 +171,7 @@
             v-model="recordForm.completed"
             active-value="1"
             inactive-value="0"
+            @change="handleDialogStatusChange"
           />
         </el-form-item>
         
@@ -229,10 +209,9 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getNursingRecords, addNursingRecord, updateNursingRecord, deleteNursingRecord } from '@/api/nursing'
 
-// 搜索和筛选参数
+// 搜索参数
 const searchParams = reactive({
   residentName: '',
-  dateRange: null,
   completed: ''
 })
 
@@ -266,7 +245,6 @@ const recordForm = reactive({
 const recordRules = {
   residentName: [{ required: true, message: '请输入老人姓名', trigger: 'blur' }],
   nursingContent: [{ required: true, message: '请输入护理内容', trigger: 'blur' }],
-  executeTime: [{ required: true, message: '请选择执行时间', trigger: 'change' }],
   executor: [{ required: true, message: '请输入执行人姓名', trigger: 'blur' }],
   evaluation: [{ required: true, message: '请选择效果评估', trigger: 'change' }]
 }
@@ -301,22 +279,31 @@ const fetchNursingRecords = async () => {
     if (response && response.data) {
       const data = response.data
       if (data.success) {
-        nursingRecordsList.value = data.data.list || data.data.records || []
-        // 确保evaluation为数字类型
-        nursingRecordsList.value = nursingRecordsList.value.map(record => ({
+        // 假设后端返回的数据在 data.data.list 或 data.data.records 中
+        const list = data.data.list || data.data.records || []
+        
+        nursingRecordsList.value = list.map(record => ({
           ...record,
-          evaluation: Number(record.evaluation || 2)
+          // 【关键修复】强制转为字符串，确保与 el-switch 的 active-value="1" 匹配
+          // 这样切换页面或刷新后，状态依然是"已完成"
+          completed: String(record.completed !== null ? record.completed : '0'),
+          
+          // 确保 evaluation 是数字 (防止评分组件报错)
+          evaluation: Number(record.evaluation || 0)
         }))
-        total.value = data.data.total || data.data.totalCount || 0
+        
+        total.value = data.data.total || 0
       } else {
         ElMessage.error(data.message || '获取护理记录列表失败')
       }
     } else if (Array.isArray(response.data)) {
-      nursingRecordsList.value = response.data
-      // 确保evaluation为数字类型
-      nursingRecordsList.value = nursingRecordsList.value.map(record => ({
+      nursingRecordsList.value = response.data.map(record => ({
         ...record,
-        evaluation: Number(record.evaluation || 2)
+        // 【关键修复】强制转为字符串，确保与 el-switch 的 active-value="1" 匹配
+        completed: String(record.completed !== null ? record.completed : '0'),
+        
+        // 确保 evaluation 是数字 (防止评分组件报错)
+        evaluation: Number(record.evaluation || 0)
       }))
       total.value = response.data.length
     } else {
@@ -360,7 +347,6 @@ const resetForm = () => {
     id: null,
     residentName: '',
     nursingContent: '',
-    executeTime: '',
     executor: '',
     completed: '0',
     evaluation: 2,
@@ -391,18 +377,37 @@ const handleSubmit = async () => {
     // 表单验证
     await recordFormRef.value.validate()
     
+    // 准备提交数据
+    const submitData = {
+      ...recordForm,
+      // 1. 【关键】确保 completed 转为数字类型 (数据库通常存 0/1，前端 switch 可能是 "0"/"1")
+      completed: parseInt(recordForm.completed),
+      // 2. 确保 evaluation 是数字
+      evaluation: Number(recordForm.evaluation),
+      // 3. 如果是添加操作，且状态为已完成，自动设置执行时间为当前时间
+      // 如果是编辑操作，保留原执行时间
+      executeTime: recordForm.executeTime || (recordForm.completed === '1' ? getNowFormatDate() : null)
+    }
+    
+    // 移除可能导致后端报错的多余字段 (如果后端实体类很严格)
+    // 通常 createTime/updateTime 不应该由前端更新，建议删除
+    delete submitData.createTime
+    delete submitData.updateTime
+    
+    console.log('提交的数据:', submitData)
+
     let response
     let successMessage
     let errorMessage
     
     if (recordForm.id) {
       // 更新护理记录
-      response = await updateNursingRecord(recordForm)
+      response = await updateNursingRecord(submitData)
       successMessage = '护理记录更新成功'
       errorMessage = '护理记录更新失败'
     } else {
       // 添加护理记录
-      response = await addNursingRecord(recordForm)
+      response = await addNursingRecord(submitData)
       successMessage = '护理记录添加成功'
       errorMessage = '护理记录添加失败'
     }
@@ -446,48 +451,60 @@ const handleDelete = (id) => {
   })
 }
 
-// 处理完成状态变更
+// 处理状态变更
 const handleStatusChange = async (row) => {
-  try {
-    // 保存当前状态，用于恢复
-    const originalStatus = row.completed
+    // 1. 获取变更后的新状态
+    const newStatus = row.completed
     
-    // 确保completed为数字类型，后端可能期望数字
-    const updateData = {
-      id: row.id,
-      completed: row.completed === '1' ? 1 : 0
+    // 备份旧状态和旧时间（用于请求失败时回滚）
+    const oldStatus = newStatus === '1' ? '0' : '1'
+    const oldExecuteTime = row.executeTime
+
+    try {
+        // 2. 准备提交给后端的参数
+        const updateData = {
+            id: row.id,
+            // 确保转换为数字类型 (根据数据库 tinyint)
+            completed: parseInt(newStatus)
+        }
+
+        // 3. 【核心逻辑】如果点击了"已完成" (值为'1')
+        let newTimeStr = null
+        if (newStatus === '1') {
+            newTimeStr = getNowFormatDate() // 生成当前时间
+            updateData.executeTime = newTimeStr // 放入参数中发送给后端
+        }
+
+        console.log('正在更新:', updateData)
+
+        // 4. 调用后端 API
+        const res = await updateNursingRecord(updateData)
+
+        // 5. 检查响应，适配后端返回格式
+        if (res && (res.code === 200 || res.data?.success)) {
+            ElMessage.success('操作成功')
+            
+            // 6. 【前端实时更新】界面上立即显示新时间，无需刷新
+            if (newTimeStr) {
+                row.executeTime = newTimeStr
+            }
+        } else {
+            throw new Error(res.msg || res.data?.message || '更新失败')
+        }
+    } catch (error) {
+        console.error('更新失败:', error)
+        // 7. 失败回滚：恢复到之前的状态和时间
+        row.completed = oldStatus
+        row.executeTime = oldExecuteTime
+        ElMessage.error('操作失败，已恢复')
     }
-    
-    console.log('更新状态数据:', updateData)
-    const response = await updateNursingRecord(updateData)
-    
-    console.log('状态更新响应:', response)
-    
-    // 增强响应处理，兼容不同的响应格式
-    if (response && response.data) {
-      if (response.data.success) {
-        // 更新成功，确保本地数据类型正确
-        row.completed = String(updateData.completed)
-        ElMessage.success('状态更新成功')
-      } else if (response.data.message) {
-        // 更新失败，恢复原状态
-        row.completed = originalStatus
-        ElMessage.error(response.data.message || '状态更新失败')
-      } else {
-        // 没有success字段，但响应成功
-        row.completed = String(updateData.completed)
-        ElMessage.success('状态更新成功')
-      }
-    } else {
-      // 无效响应，恢复原状态
-      row.completed = originalStatus
-      ElMessage.error('状态更新失败：无效的响应格式')
-    }
-  } catch (error) {
-    console.error('状态更新失败:', error)
-    // 恢复原状态
-    row.completed = row.completed === '1' ? '0' : '1'
-    ElMessage.error('状态更新失败：' + (error.message || '网络错误'))
+}
+
+// 【新增】处理对话框内的状态变更
+const handleDialogStatusChange = (val) => {
+  // 如果切换到了"已完成" (active-value="1")
+  if (val === '1') {
+    ElMessage.success('状态已置为完成')
   }
 }
 
@@ -497,7 +514,7 @@ const handleEvaluationChange = async (row) => {
     // 保存当前评估值，用于恢复
     const originalEvaluation = row.evaluation
     
-    // 确保evaluation为数字类型
+    // 2. 准备提交参数，只传递需要更新的字段
     const updateData = {
       id: row.id,
       evaluation: Number(row.evaluation)
@@ -508,32 +525,35 @@ const handleEvaluationChange = async (row) => {
     
     console.log('评估更新响应:', response)
     
-    // 增强响应处理，兼容不同的响应格式
-    if (response && response.data) {
-      if (response.data.success) {
-        // 更新成功，确保本地数据类型正确
-        row.evaluation = updateData.evaluation
-        ElMessage.success('评估更新成功')
-      } else if (response.data.message) {
-        // 更新失败，恢复原评估值
-        row.evaluation = originalEvaluation
-        ElMessage.error(response.data.message || '评估更新失败')
-      } else {
-        // 没有success字段，但响应成功
-        row.evaluation = updateData.evaluation
-        ElMessage.success('评估更新成功')
-      }
+    // 简化响应处理
+    if (response && response.data && response.data.success) {
+      // 更新成功，确保本地数据类型正确
+      row.evaluation = updateData.evaluation
+      ElMessage.success('评估更新成功')
     } else {
-      // 无效响应，恢复原评估值
+      // 更新失败，恢复原评估值
       row.evaluation = originalEvaluation
-      ElMessage.error('评估更新失败：无效的响应格式')
+      ElMessage.error(response.data?.message || '评估更新失败')
     }
   } catch (error) {
     console.error('评估更新失败:', error)
     // 恢复原评估值
-    row.evaluation = 2 // 默认中
-    ElMessage.error('评估更新失败：' + (error.message || '网络错误'))
+    row.evaluation = originalEvaluation
+    ElMessage.error('评估更新失败，已恢复原评估')
   }
+}
+
+// 获取当前格式化时间字符串 (YYYY-MM-DD HH:mm:ss)
+const getNowFormatDate = () => {
+  const date = new Date()
+  const pad = (n) => n.toString().padStart(2, '0')
+  const year = date.getFullYear()
+  const month = pad(date.getMonth() + 1)
+  const day = pad(date.getDate())
+  const hour = pad(date.getHours())
+  const minute = pad(date.getMinutes())
+  const second = pad(date.getSeconds())
+  return `${year}-${month}-${day} ${hour}:${minute}:${second}`
 }
 
 // 格式化日期

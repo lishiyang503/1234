@@ -31,59 +31,70 @@
               <el-option label="中级套餐" value="中级" />
               <el-option label="高级套餐" value="高级" />
             </el-select>
-            <el-date-picker
-              v-model="searchParams.dateRange"
-              type="daterange"
-              range-separator="至"
-              start-placeholder="开始日期"
-              end-placeholder="结束日期"
-              format="YYYY-MM-DD"
-              value-format="YYYY-MM-DD"
-              class="date-picker"
-            />
             <el-button type="primary" @click="handleSearch">
               <el-icon><Search /></el-icon>
               搜索
             </el-button>
           </div>
           
-          <!-- 购买记录表格 -->
-          <div class="table-container">
-            <el-table
-              :data="purchaseRecordsList"
-              border
-              stripe
-              style="width: 100%"
-              :row-class-name="tableRowClassName"
-            >
-              <el-table-column prop="id" label="ID" width="80" align="center" />
-              <el-table-column prop="residentName" label="老人姓名" width="150" />
-              <el-table-column prop="roomNumber" label="房间号" width="120" align="center" />
-              <el-table-column prop="bedNumber" label="床位号" width="120" align="center" />
-              <el-table-column prop="serviceName" label="服务套餐" width="200" />
-              <el-table-column prop="serviceLevel" label="套餐级别" width="120" align="center">
-                <template #default="scope">
-                  <el-tag :type="getLevelType(scope.row.serviceLevel)">
-                    {{ scope.row.serviceLevel }}
+          <!-- 购买记录卡片列表 -->
+          <div class="records-container">
+            <div v-if="purchaseRecordsList.length > 0" class="records-grid">
+              <el-card 
+                v-for="record in purchaseRecordsList" 
+                :key="record.id"
+                class="record-card"
+              >
+                <div class="record-header">
+                  <h4 class="service-name">{{ record.serviceName }}</h4>
+                  <el-tag 
+                    :type="record.status === '有效' ? 'success' : 'warning'"
+                    class="status-tag"
+                  >
+                    {{ record.status }}
                   </el-tag>
-                </template>
-              </el-table-column>
-              <el-table-column prop="price" label="购买金额(元)" width="150" align="center">
-                <template #default="scope">
-                  <span class="price">{{ scope.row.price }}</span>
-                </template>
-              </el-table-column>
-              <el-table-column prop="purchaseDate" label="购买日期" width="150" align="center" />
-              <el-table-column prop="expireDate" label="到期日期" width="150" align="center" />
-              <el-table-column prop="operator" label="操作人" width="120" align="center" />
-              <el-table-column prop="status" label="状态" width="120" align="center">
-                <template #default="scope">
-                  <el-tag :type="scope.row.status === '有效' ? 'success' : 'warning'">
-                    {{ scope.row.status }}
-                  </el-tag>
-                </template>
-              </el-table-column>
-            </el-table>
+                </div>
+                
+                <div class="record-body">
+                  <div class="resident-info">
+                    <span class="resident-name">{{ record.residentName }}</span>
+                    <span class="room-info">房间 {{ record.roomNumber }} | 床位 {{ record.bedNumber }}</span>
+                  </div>
+                  
+                  <div class="record-details">
+                    <div class="detail-item">
+                      <span class="detail-label">套餐级别：</span>
+                      <el-tag :type="getLevelType(record.serviceLevel)" size="small">
+                        {{ record.serviceLevel }}
+                      </el-tag>
+                    </div>
+                    <div class="detail-item">
+                      <span class="detail-label">下单时间：</span>
+                      <span class="detail-value">{{ formatDate(record.purchaseDate) }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <span class="detail-label">到期时间：</span>
+                      <span class="detail-value">{{ formatDate(record.expireDate) }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <span class="detail-label">操作人：</span>
+                      <span class="detail-value">{{ record.operator }}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="record-footer">
+                  <div class="price-info">
+                    <span class="price-label">金额：</span>
+                    <span class="price-value">￥{{ record.price }}</span>
+                  </div>
+                </div>
+              </el-card>
+            </div>
+            
+            <div v-else class="empty-state">
+              <el-empty description="暂无购买记录" />
+            </div>
           </div>
           
           <!-- 分页 -->
@@ -112,8 +123,7 @@ import { getPurchaseRecords } from '@/api/service'
 // 搜索和筛选参数
 const searchParams = reactive({
   residentName: '',
-  serviceLevel: '',
-  dateRange: []
+  serviceLevel: ''
 })
 
 // 表格数据
@@ -181,6 +191,18 @@ const handleCurrentChange = (page) => {
 // 表格行样式
 const tableRowClassName = ({ row, rowIndex }) => {
   return rowIndex % 2 === 0 ? 'even-row' : 'odd-row'
+}
+
+// 时间格式化函数
+const formatDate = (dateString) => {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  return `${year}年${month}月${day}日 ${hours}:${minutes}`
 }
 </script>
 
@@ -260,27 +282,157 @@ const tableRowClassName = ({ row, rowIndex }) => {
   width: 350px;
 }
 
-.table-container {
+.records-container {
   margin-bottom: 24px;
-  overflow-x: auto;
 }
 
-.price {
+.records-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 24px;
+}
+
+.record-card {
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.record-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.record-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.service-name {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.status-tag {
+  font-size: 14px;
+  padding: 4px 12px;
+}
+
+.record-body {
+  margin-bottom: 16px;
+}
+
+.resident-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.resident-name {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.room-info {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.record-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.detail-label {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  min-width: 100px;
+  flex-shrink: 0;
+}
+
+.detail-value {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.record-footer {
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.price-info {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+
+.price-label {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.price-value {
+  font-size: 20px;
   font-weight: 600;
   color: var(--danger-color);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
 }
 
 .pagination {
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  margin-top: 24px;
 }
 
-.even-row {
-  background-color: var(--bg-primary);
-}
-
-.odd-row {
-  background-color: var(--bg-secondary);
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .records-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .record-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .detail-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .detail-label {
+    min-width: unset;
+  }
+  
+  .price-info {
+    justify-content: flex-start;
+  }
 }
 </style>

@@ -67,19 +67,16 @@
               <el-table-column prop="description" label="护理内容描述" min-width="250" />
               <el-table-column label="适用护理级别" min-width="180" align="center">
                 <template #default="scope">
-                  <div class="level-tags">
-                    <el-tag 
-                      v-for="level in scope.row.applicableLevels" 
-                      :key="level"
-                      size="small"
-                      :type="getLevelTagType(level)"
-                    >
-                      {{ getLevelText(level) }}
-                    </el-tag>
-                  </div>
+                  <el-tag 
+                    v-if="scope.row.applicableLevel"
+                    size="small"
+                    :type="getLevelTagType(scope.row.applicableLevel)"
+                  >
+                    {{ getLevelText(scope.row.applicableLevel) }}
+                  </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column prop="duration" label="预计时长(分钟)" width="150" align="center" sortable />
+
               <el-table-column label="操作" width="120" align="center">
                 <template #default="scope">
                   <el-dropdown>
@@ -154,11 +151,11 @@
           />
         </el-form-item>
         
-        <el-form-item label="适用护理级别" prop="applicableLevels">
+        <el-form-item label="适用护理级别" prop="applicableLevel">
           <el-select 
-            v-model="contentForm.applicableLevels" 
+            v-model="contentForm.applicableLevel" 
             placeholder="请选择适用护理级别"
-            multiple
+            clearable
             style="width: 100%"
           >
             <el-option label="基础护理" value="1" />
@@ -168,17 +165,7 @@
             <el-option label="SVIP" value="5" />
           </el-select>
         </el-form-item>
-        
-        <el-form-item label="预计时长(分钟)" prop="duration">
-          <el-input-number
-            v-model="contentForm.duration"
-            :min="1"
-            :max="360"
-            :step="5"
-            placeholder="请输入预计时长"
-            style="width: 100%"
-          />
-        </el-form-item>
+
       </el-form>
       
       <template #footer>
@@ -222,8 +209,7 @@ const contentForm = reactive({
   name: '',
   category: '',
   description: '',
-  applicableLevels: [],
-  duration: 30
+  applicableLevel: '' // 改为字符串，初始为空
 })
 
 // 表单验证规则
@@ -231,11 +217,7 @@ const contentRules = {
   name: [{ required: true, message: '请输入护理内容名称', trigger: 'blur' }],
   category: [{ required: true, message: '请选择护理类型', trigger: 'change' }],
   description: [{ required: true, message: '请输入护理内容描述', trigger: 'blur' }],
-  applicableLevels: [{ required: true, message: '请选择适用护理级别', trigger: 'change' }],
-  duration: [
-    { required: true, message: '请输入预计时长', trigger: 'blur' },
-    { type: 'number', min: 1, message: '预计时长不能少于1分钟', trigger: 'blur,change' }
-  ]
+  applicableLevel: [{ required: true, message: '请选择适用护理级别', trigger: 'change' }]
 }
 
 // 生命周期
@@ -304,15 +286,42 @@ const fetchNursingContents = async () => {
     total.value = typeof processedData.total === 'number' ? processedData.total : nursingContentsList.value.length
     
     // 为每条记录添加默认值，防止表格显示异常
-    nursingContentsList.value = nursingContentsList.value.map(record => ({
-      ...record,
-      id: record.id || '',
-      name: record.name || '',
-      category: record.category || '',
-      description: record.description || '',
-      applicableLevels: record.applicableLevels || [],
-      duration: record.duration || 0
-    }))
+    nursingContentsList.value = nursingContentsList.value.map(record => {
+      console.log('原始记录:', record)
+      
+      // 【修复】兼容处理：优先尝试获取驼峰命名(常见后端返回格式)，如果不存在则尝试获取下划线命名(数据库原生格式)
+      const levelValue = record.applicableLevel || record.applicable_level || ''
+      console.log('数据库返回的适用护理级别:', levelValue, '类型:', typeof levelValue)
+      
+      // 直接获取值，确保是字符串或数字类型
+      let applicableLevel = levelValue
+      if (typeof levelValue === 'string') {
+        // 处理空格分隔的字符串，只取第一个值（因为现在是单选）
+        const firstValue = levelValue.split(/\s+/)
+          .map(item => item.trim())
+          .filter(item => item && item !== '(Null)')[0] || ''
+        
+        // 将字符串类型的数字转换为数字类型，确保getLevelText函数能正确识别
+        const levelNum = Number(firstValue)
+        applicableLevel = isNaN(levelNum) ? firstValue : levelNum
+      } else if (Array.isArray(levelValue)) {
+        // 如果是数组，只取第一个值（兼容旧数据）
+        applicableLevel = levelValue[0] || ''
+      }
+      
+      const processedRecord = {
+        ...record,
+        id: record.id || '',
+        name: record.name || '',
+        category: record.category || '',
+        description: record.description || '',
+        applicableLevel: applicableLevel
+      }
+      
+      console.log('处理后的记录:', processedRecord)
+      
+      return processedRecord
+    })
     
   } catch (error) {
     console.error('获取护理内容列表失败:', error)
@@ -407,8 +416,7 @@ const resetForm = () => {
     name: '',
     category: '',
     description: '',
-    applicableLevels: [],
-    duration: 30
+    applicableLevel: ''
   })
 }
 
@@ -422,7 +430,16 @@ const showAddDialog = () => {
 // 显示编辑对话框
 const showEditDialog = (row) => {
   dialogTitle.value = '编辑护理内容'
-  Object.assign(contentForm, row)
+  
+  // 简单深拷贝
+  const rowCopy = JSON.parse(JSON.stringify(row))
+  
+  // 直接赋值给表单
+  Object.assign(contentForm, rowCopy)
+  
+  // 确保 applicableLevel 字段存在（防止 rowCopy 中没有这个字段导致表单没反应）
+  contentForm.applicableLevel = rowCopy.applicableLevel || ''
+  
   dialogVisible.value = true
 }
 
@@ -432,18 +449,30 @@ const handleSubmit = async () => {
     // 表单验证
     await contentFormRef.value.validate()
     
+    // 准备提交数据，确保使用正确的字段名和格式
+    const submitData = {
+      id: contentForm.id,
+      name: contentForm.name,
+      category: contentForm.category,
+      description: contentForm.description,
+      // 直接提交，无需转换
+      applicable_level: contentForm.applicableLevel
+    }
+    
+    console.log('提交的数据:', submitData)
+    
     let response
     let successMessage
     let errorMessage
     
     if (contentForm.id) {
       // 更新护理内容
-      response = await updateNursingContent(contentForm)
+      response = await updateNursingContent(submitData)
       successMessage = '护理内容更新成功'
       errorMessage = '护理内容更新失败'
     } else {
       // 添加护理内容
-      response = await addNursingContent(contentForm)
+      response = await addNursingContent(submitData)
       successMessage = '护理内容添加成功'
       errorMessage = '护理内容添加失败'
     }

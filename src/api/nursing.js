@@ -95,10 +95,11 @@ export const addNursingRecord = (data) => {
 
 // 更新护理记录
 export const updateNursingRecord = (data) => {
+  // 【修复】直接发送所有数据，不要手动过滤字段，否则编辑其他信息（如备注、姓名）会不生效
   return request({
     url: '/nursing/record/update',
     method: 'put',
-    data
+    data: data
   })
 }
 
