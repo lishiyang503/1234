@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>护理内容管理</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .operation-btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .operation-btn:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>护理内容管理</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>名称</th>
+                <th>适用护理级别</th>
+                <th>预计时长(分钟)</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="nursingContentsTable">
+            <!-- 数据将通过JavaScript动态加载 -->
+        </tbody>
+    </table>
+
+    <script>
+        // 获取护理内容列表
+        function getNursingContents() {
+            fetch('http://localhost:8990/nursing/contents')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        renderNursingContents(data.data.list);
+                    } else {
+                        alert('获取护理内容失败：' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('获取护理内容失败：', error);
+                    alert('获取护理内容失败');
+                });
+        }
+
+        // 渲染护理内容表格
+        function renderNursingContents(contents) {
+            const tableBody = document.getElementById('nursingContentsTable');
+            tableBody.innerHTML = '';
+
+            contents.forEach(content => {
+                const row = document.createElement('tr');
+                
+                // ID列
+                const idCell = document.createElement('td');
+                idCell.textContent = content.id;
+                row.appendChild(idCell);
+                
+                // 名称列
+                const nameCell = document.createElement('td');
+                nameCell.textContent = content.name;
+                row.appendChild(nameCell);
+                
+                // 适用护理级别列 - 修复显示问题
+                const applicableLevelCell = document.createElement('td');
+                // 处理null值，确保即使为null也显示"无"或空字符串，而不是undefined
+                applicableLevelCell.textContent = content.applicableLevel || '';
+                row.appendChild(applicableLevelCell);
+                
+                // 预计时长列
+                const durationCell = document.createElement('td');
+                durationCell.textContent = content.expectedDuration || 0;
+                row.appendChild(durationCell);
+                
+                // 操作列
+                const operationCell = document.createElement('td');
+                const editBtn = document.createElement('button');
+                editBtn.className = 'operation-btn';
+                editBtn.textContent = '编辑';
+                editBtn.onclick = () => editNursingContent(content.id);
+                operationCell.appendChild(editBtn);
+                row.appendChild(operationCell);
+                
+                tableBody.appendChild(row);
+            });
+        }
+
+        // 编辑护理内容
+        function editNursingContent(id) {
+            alert(`编辑护理内容 ID: ${id}`);
+        }
+
+        // 页面加载时获取数据
+        window.onload = getNursingContents;
+    </script>
+</body>
+</html>
