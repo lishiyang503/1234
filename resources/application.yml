@@ -1,0 +1,19 @@
+server:
+  port: 8990
+
+# 上传配置
+upload:
+  path: C:\data\upload
+  prefix: /upload
+
+spring:
+  datasource:
+    username: root
+    password: 1234
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:3306/yiyang
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+    serialization:  
+      write-dates-as-timestamps: false

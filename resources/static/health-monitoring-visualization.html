@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧养老 · 健康监测驾驶舱</title>
+    <!-- ECharts 库 -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <!-- 页面样式 -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #0a0e27;
+            color: #ffffff;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* 标题栏 */
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            color: #3498db;
+            margin-bottom: 5px;
+        }
+        
+        .header .subtitle {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        
+        .header .datetime {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 14px;
+            color: #3498db;
+        }
+        
+        /* 主网格布局 */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 250px 1fr 300px;
+            grid-template-rows: auto 1fr;
+            gap: 20px;
+            height: calc(100vh - 120px);
+        }
+        
+        /* 监测对象档案 */
+        .monitoring-profile {
+            background: linear-gradient(135deg, #1e272e 0%, #2f3640 100%);
+            border-radius: 8px;
+            padding: 20px;
+            grid-row: 1 / -1;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .profile-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .profile-header h3 {
+            color: #3498db;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .resident-select {
+            width: 100%;
+            padding: 8px;
+            background-color: #353b48;
+            color: #ffffff;
+            border: 1px solid #485460;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .profile-info {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3498db 0%, #2ecc71 100%);
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+            position: relative;
+        }
+        
+        .age-tag {
+            position: absolute;
+            bottom: -5px;
+            right: -5px;
+            background-color: #e74c3c;
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+        }
+        
+        .resident-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .resident-details {
+            background-color: #353b48;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        
+        .detail-label {
+            color: #7f8c8d;
+        }
+        
+        .detail-value {
+            color: #ffffff;
+            font-weight: bold;
+        }
+        
+        .nursing-info {
+            background-color: #353b48;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .nursing-info h4 {
+            color: #3498db;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .nursing-item {
+            background-color: #485460;
+            padding: 8px;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            font-size: 12px;
+        }
+        
+        /* 实时健康预警 */
+        .health-alerts {
+            margin-top: 20px;
+        }
+        
+        .health-alerts h3 {
+            color: #3498db;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .alert-item {
+            background-color: #c0392b;
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+        
+        /* 院内活动轨迹 */
+        .activity-tracking {
+            background: linear-gradient(135deg, #1e272e 0%, #2f3640 100%);
+            border-radius: 8px;
+            padding: 20px;
+            grid-column: 2;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .activity-tracking h3 {
+            color: #3498db;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        
+        .map-container {
+            height: 200px;
+            background-color: #353b48;
+            border-radius: 4px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #7f8c8d;
+        }
+        
+        .map-marker {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #2ecc71;
+            border: 3px solid #ffffff;
+            box-shadow: 0 0 10px #2ecc71;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7);
+            }
+            70% {
+                transform: scale(1.2);
+                box-shadow: 0 0 0 10px rgba(46, 204, 113, 0);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(46, 204, 113, 0);
+            }
+        }
+        
+        /* 实时体征快照 */
+        .vitals-snapshot {
+            background: linear-gradient(135deg, #1e272e 0%, #2f3640 100%);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .vitals-snapshot h3 {
+            color: #3498db;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        
+        .vitals-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .vital-card {
+            text-align: center;
+        }
+        
+        .vital-title {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+        
+        .vital-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #3498db;
+            margin-bottom: 5px;
+        }
+        
+        .vital-unit {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+        
+        /* 右侧面板 */
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        /* 睡眠质量和体温监测卡片 */
+        .sleep-temperature-panel {
+            background: linear-gradient(135deg, #1e272e 0%, #2f3640 100%);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .panel-title {
+            color: #3498db;
+            margin-bottom: 15px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .panel-title::before {
+            content: "";
+            width: 4px;
+            height: 16px;
+            background-color: #3498db;
+            border-radius: 2px;
+        }
+        
+        .chart-container {
+            height: 250px;
+            margin-bottom: 15px;
+        }
+        
+        .no-data {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 150px;
+            color: #7f8c8d;
+            font-size: 16px;
+        }
+        
+        /* 睡眠质量卡片 */
+        .sleep-quality-card {
+            margin-bottom: 20px;
+        }
+        
+        .sleep-summary {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .sleep-item {
+            background-color: #353b48;
+            padding: 12px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .sleep-item-label {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+        
+        .sleep-item-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffffff;
+        }
+        
+        .sleep-item-unit {
+            font-size: 10px;
+            color: #7f8c8d;
+        }
+        
+        /* 体温监测卡片 */
+        .temperature-card {
+            margin-bottom: 20px;
+        }
+        
+        .temperature-display {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 15px 0;
+        }
+        
+        .current-temperature {
+            font-size: 48px;
+            font-weight: bold;
+            color: #2ecc71;
+        }
+        
+        .temperature-status {
+            font-size: 16px;
+            color: #2ecc71;
+            font-weight: bold;
+        }
+        
+        /* 72小时生理指标趋势 */
+        .trends-panel {
+            background: linear-gradient(135deg, #1e272e 0%, #2f3640 100%);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            grid-column: 2;
+        }
+        
+        .trends-panel h3 {
+            color: #3498db;
+            margin-bottom: 15px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .trends-panel h3::before {
+            content: "";
+            width: 4px;
+            height: 16px;
+            background-color: #3498db;
+            border-radius: 2px;
+        }
+        
+        .trends-chart {
+            height: 300px;
+        }
+        
+        /* 快捷操作按钮 */
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .action-btn {
+            flex: 1;
+            padding: 10px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+        
+        .action-btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .action-btn.warning {
+            background-color: #e74c3c;
+        }
+        
+        .action-btn.warning:hover {
+            background-color: #c0392b;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto;
+                height: auto;
+            }
+            
+            .monitoring-profile {
+                grid-row: auto;
+            }
+            
+            .activity-tracking,
+            .trends-panel {
+                grid-column: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>智慧养老 · 健康监测驾驶舱</h1>
+            <div class="subtitle">Smart Elderly Care Health Monitoring System</div>
+            <div class="datetime" id="currentDateTime"></div>
+        </div>
+        
+        <div class="main-grid">
+            <!-- 监测对象档案 -->
+            <div class="monitoring-profile">
+                <div class="profile-header">
+                    <h3>监测对象档案</h3>
+                    <select class="resident-select" id="residentSelect">
+                        <!-- 居民列表将通过JavaScript动态加载 -->
+                    </select>
+                </div>
+                
+                <div class="profile-info">
+                    <div class="avatar" id="residentAvatar">
+                        <!-- 居民头像将通过JavaScript动态加载 -->
+                        <div class="age-tag" id="residentAgeDisplay">--</div>
+                    </div>
+                    <div class="resident-name" id="residentName">--</div>
+                    
+                    <div class="resident-details">
+                        <div class="detail-item">
+                            <span class="detail-label">年龄</span>
+                            <span class="detail-value" id="residentAge">--</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">房间</span>
+                            <span class="detail-value" id="residentRoom">--</span>
+                        </div>
+                    </div>
+                    
+                    <div class="nursing-info">
+                        <h4>护理信息</h4>
+                        <div class="nursing-item">护理等级：<span id="nursingLevel">--</span></div>
+                        <div class="nursing-item">责任护工：<span id="nurseName">--</span></div>
+                    </div>
+                </div>
+                
+                <div class="health-alerts">
+                    <h3>实时健康预警</h3>
+                    <div id="alertsContainer">
+                        <!-- 预警信息将通过JavaScript动态添加 -->
+                    </div>
+                </div>
+                
+                <div class="quick-actions">
+                    <button class="action-btn" onclick="refreshData()">刷新数据</button>
+                    <button class="action-btn warning">录入血压</button>
+                </div>
+            </div>
+            
+            <!-- 院内实时活动轨迹 -->
+            <div class="activity-tracking">
+                <h3>院内实时活动轨迹 (LBS)</h3>
+                <div class="map-container">
+                    <div class="map-marker"></div>
+                </div>
+                <div style="text-align: center; margin-top: 10px; color: #7f8c8d; font-size: 14px;">实时定位</div>
+            </div>
+            
+            <!-- 右侧面板 -->
+            <div class="right-panel">
+                <!-- 实时体征快照 -->
+                <div class="vitals-snapshot">
+                    <h3>实时体征快照</h3>
+                    <div class="vitals-grid">
+                        <div class="vital-card">
+                            <div class="vital-title">心率 (BPM)</div>
+                            <div class="vital-value" id="heartRateValue">--</div>
+                            <div class="vital-unit">BPM</div>
+                        </div>
+                        <div class="vital-card">
+                            <div class="vital-title">血氧 (SpO2)</div>
+                            <div class="vital-value" id="bloodOxygenValue">--</div>
+                            <div class="vital-unit">%</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 睡眠质量和体温监测 -->
+                <div class="sleep-temperature-panel">
+                    <!-- 昨夜睡眠质量 -->
+                    <div class="sleep-quality-card">
+                        <div class="panel-title">昨夜睡眠质量</div>
+                        <div id="sleepQualityChart" class="chart-container"></div>
+                        <div id="sleepSummary" class="sleep-summary">
+                            <!-- 睡眠数据将通过JavaScript动态添加 -->
+                        </div>
+                    </div>
+                    
+                    <!-- 今日体温监测 -->
+                    <div class="temperature-card">
+                        <div class="panel-title">今日体温监测</div>
+                        <div class="temperature-display">
+                            <div class="current-temperature" id="currentTemperature">--</div>
+                            <div class="temperature-status" id="temperatureStatus">--</div>
+                        </div>
+                        <div id="bodyTempChart" class="chart-container"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 72小时生理指标趋势 -->
+            <div class="trends-panel">
+                <h3>72小时生理指标趋势</h3>
+                <div class="chart-container" id="trendsChart"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ECharts 初始化和数据加载 -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script>
+        // 初始化图表
+        const sleepQualityChart = echarts.init(document.getElementById('sleepQualityChart'));
+        const bodyTempChart = echarts.init(document.getElementById('bodyTempChart'));
+        const trendsChart = echarts.init(document.getElementById('trendsChart'));
+        
+        // 当前选中的老人ID
+        let currentResidentId = 1;
+        
+        // 更新日期时间
+        function updateDateTime() {
+            const now = new Date();
+            const options = {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            document.getElementById('currentDateTime').textContent = now.toLocaleString('zh-CN', options);
+        }
+        
+        // 初始化日期时间
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+        
+        // 刷新数据函数
+        function refreshData() {
+            currentResidentId = document.getElementById('residentSelect').value;
+            fetchVitalsSnapshot();
+            fetchSleepQualityData();
+            fetchBodyTemperatureData();
+            fetchHealthAlerts();
+            fetchTrendsData();
+            updateResidentInfo();
+        }
+        
+        // 获取居民列表
+        function fetchResidents() {
+            fetch('/health-monitoring/residents')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const residents = data.data;
+                        const residentSelect = document.getElementById('residentSelect');
+                        
+                        // 清空现有选项
+                        residentSelect.innerHTML = '';
+                        
+                        // 添加新选项
+                        residents.forEach(resident => {
+                            const option = document.createElement('option');
+                            option.value = resident.id;
+                            option.textContent = resident.name;
+                            residentSelect.appendChild(option);
+                        });
+                        
+                        // 默认选择第一个居民
+                        if (residents.length > 0) {
+                            currentResidentId = residents[0].id;
+                            refreshData();
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('获取居民列表失败:', error);
+                });
+        }
+        
+        // 更新居民信息
+        function updateResidentInfo() {
+            // 根据选中的居民ID从服务器获取居民信息
+            fetch('/health-monitoring/residents')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const residents = data.data;
+                        const resident = residents.find(r => r.id == currentResidentId);
+                        
+                        if (resident) {
+                            document.getElementById('residentName').textContent = resident.name;
+                            document.getElementById('residentAge').textContent = resident.age + '岁';
+                            document.getElementById('residentRoom').textContent = resident.room_number;
+                            document.getElementById('residentAvatar').innerHTML = resident.name.charAt(0) + '<div class="age-tag">' + resident.age + '岁</div>';
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('获取居民信息失败:', error);
+                });
+        }
+        
+        // 获取实时体征快照
+        function fetchVitalsSnapshot() {
+            fetch(`/health-monitoring/vitals-snapshot/${currentResidentId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const vitals = data.data;
+                        document.getElementById('heartRateValue').textContent = vitals.heartRate || 0;
+                        document.getElementById('bloodOxygenValue').textContent = vitals.bloodOxygen || 0;
+                        
+                        // 更新体温状态
+                        const temp = vitals.bodyTemperature || 0;
+                        let status = "体温正常";
+                        let statusColor = "#2ecc71";
+                        if (temp < 36.0) {
+                            status = "体温偏低";
+                            statusColor = "#3498db";
+                        } else if (temp >= 37.3 && temp < 38.0) {
+                            status = "低热";
+                            statusColor = "#f39c12";
+                        } else if (temp >= 38.0) {
+                            status = "高热";
+                            statusColor = "#e74c3c";
+                        }
+                        document.getElementById('temperatureStatus').textContent = status;
+                        document.getElementById('temperatureStatus').style.color = statusColor;
+                        document.getElementById('currentTemperature').style.color = statusColor;
+                        document.getElementById('currentTemperature').textContent = temp;
+                    }
+                })
+                .catch(error => {
+                    console.error('获取实时体征数据失败:', error);
+                });
+        }
+        
+        // 获取睡眠质量数据
+        function fetchSleepQualityData() {
+            fetch(`/health-monitoring/sleep-quality/${currentResidentId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data && data.data.length > 0) {
+                        const sleepData = data.data[0];
+                        
+                        // 更新睡眠质量图表
+                        const sleepOption = {
+                            tooltip: {
+                                trigger: 'item',
+                                formatter: '{b}: {c}小时 ({d}%)'
+                            },
+                            series: [
+                                {
+                                    name: '睡眠时长',
+                                    type: 'pie',
+                                    radius: ['40%', '70%'],
+                                    avoidLabelOverlap: false,
+                                    itemStyle: {
+                                        borderRadius: 10,
+                                        borderColor: '#1e272e',
+                                        borderWidth: 2
+                                    },
+                                    label: {
+                                        show: false
+                                    },
+                                    emphasis: {
+                                        label: {
+                                            show: true,
+                                            fontSize: '16',
+                                            fontWeight: 'bold',
+                                            color: '#ffffff'
+                                        }
+                                    },
+                                    labelLine: {
+                                        show: false
+                                    },
+                                    data: [
+                                        {
+                                            value: sleepData.deepSleepDuration || 0,
+                                            name: '深睡',
+                                            itemStyle: {
+                                                color: '#667eea'
+                                            }
+                                        },
+                                        {
+                                            value: sleepData.lightSleepDuration || 0,
+                                            name: '浅睡',
+                                            itemStyle: {
+                                                color: '#764ba2'
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        };
+                        sleepQualityChart.setOption(sleepOption);
+                        
+                        // 更新睡眠摘要
+                        const sleepSummaryHTML = `
+                            <div class="sleep-item">
+                                <div class="sleep-item-label">总睡眠时长</div>
+                                <div class="sleep-item-value">${sleepData.sleepDuration || 0}<span class="sleep-item-unit">小时</span></div>
+                            </div>
+                            <div class="sleep-item">
+                                <div class="sleep-item-label">睡眠评分</div>
+                                <div class="sleep-item-value">${sleepData.sleepScore || 0}</div>
+                            </div>
+                            <div class="sleep-item">
+                                <div class="sleep-item-label">深睡时长</div>
+                                <div class="sleep-item-value">${sleepData.deepSleepDuration || 0}<span class="sleep-item-unit">小时</span></div>
+                            </div>
+                            <div class="sleep-item">
+                                <div class="sleep-item-label">睡眠质量</div>
+                                <div class="sleep-item-value">${sleepData.sleepStatus || '未知'}</div>
+                            </div>
+                        `;
+                        document.getElementById('sleepSummary').innerHTML = sleepSummaryHTML;
+                    } else {
+                        // 显示无数据
+                        const noDataOption = {
+                            title: {
+                                text: '暂无睡眠数据',
+                                left: 'center',
+                                top: 'center',
+                                textStyle: {
+                                    color: '#7f8c8d',
+                                    fontSize: 16
+                                }
+                            }
+                        };
+                        sleepQualityChart.setOption(noDataOption);
+                        
+                        document.getElementById('sleepSummary').innerHTML = '<div class="no-data">暂无睡眠数据</div>';
+                    }
+                })
+                .catch(error => {
+                    console.error('获取睡眠质量数据失败:', error);
+                    const noDataOption = {
+                        title: {
+                            text: '暂无睡眠数据',
+                            left: 'center',
+                            top: 'center',
+                            textStyle: {
+                                color: '#7f8c8d',
+                                fontSize: 16
+                            }
+                        }
+                    };
+                    sleepQualityChart.setOption(noDataOption);
+                    document.getElementById('sleepSummary').innerHTML = '<div class="no-data">获取数据失败</div>';
+                });
+        }
+        
+        // 获取体温数据
+        function fetchBodyTemperatureData() {
+            fetch(`/health-monitoring/body-temperature/${currentResidentId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data && data.data.length > 0) {
+                        const records = data.data;
+                        
+                        // 处理数据，只保留最近24小时的数据
+                        const now = new Date();
+                        const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+                        const recentRecords = records.filter(record => {
+                            const measureTime = new Date(record.measure_time);
+                            return measureTime >= oneDayAgo;
+                        });
+                        
+                        if (recentRecords.length > 0) {
+                            // 按时间排序
+                            recentRecords.sort((a, b) => new Date(a.measureTime) - new Date(b.measureTime));
+                            
+                            const timestamps = recentRecords.map(record => new Date(record.measureTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+                            const values = recentRecords.map(record => record.temperature);
+                            
+                            const tempOption = {
+                                tooltip: {
+                                    trigger: 'axis',
+                                    formatter: '{b}: {c}°C'
+                                },
+                                grid: {
+                                    left: '3%',
+                                    right: '4%',
+                                    bottom: '3%',
+                                    containLabel: true
+                                },
+                                xAxis: {
+                                    type: 'category',
+                                    boundaryGap: false,
+                                    data: timestamps,
+                                    axisLabel: {
+                                        color: '#7f8c8d',
+                                        fontSize: 12
+                                    },
+                                    axisLine: {
+                                        lineStyle: {
+                                            color: '#353b48'
+                                        }
+                                    },
+                                    splitLine: {
+                                        lineStyle: {
+                                            color: '#353b48'
+                                        }
+                                    }
+                                },
+                                yAxis: {
+                                    type: 'value',
+                                    name: '体温 (°C)',
+                                    min: 35,
+                                    max: 40,
+                                    axisLabel: {
+                                        color: '#7f8c8d',
+                                        fontSize: 12
+                                    },
+                                    axisLine: {
+                                        lineStyle: {
+                                            color: '#353b48'
+                                        }
+                                    },
+                                    splitLine: {
+                                        lineStyle: {
+                                            color: '#353b48'
+                                        }
+                                    }
+                                },
+                                series: [{
+                                    name: '体温',
+                                    type: 'line',
+                                    data: values,
+                                    smooth: true,
+                                    itemStyle: {
+                                        color: '#2ecc71'
+                                    },
+                                    lineStyle: {
+                                        color: '#2ecc71',
+                                        width: 2
+                                    },
+                                    areaStyle: {
+                                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                            { offset: 0, color: 'rgba(46, 204, 113, 0.3)' },
+                                            { offset: 1, color: 'rgba(46, 204, 113, 0.1)' }
+                                        ])
+                                    }
+                                }]
+                            };
+                            bodyTempChart.setOption(tempOption);
+                        } else {
+                            // 显示无数据
+                            const noDataOption = {
+                                title: {
+                                    text: '暂无体温数据',
+                                    left: 'center',
+                                    top: 'center',
+                                    textStyle: {
+                                        color: '#7f8c8d',
+                                        fontSize: 16
+                                    }
+                                }
+                            };
+                            bodyTempChart.setOption(noDataOption);
+                        }
+                    } else {
+                        // 显示无数据
+                        const noDataOption = {
+                            title: {
+                                text: '暂无体温数据',
+                                left: 'center',
+                                top: 'center',
+                                textStyle: {
+                                    color: '#7f8c8d',
+                                    fontSize: 16
+                                }
+                            }
+                        };
+                        bodyTempChart.setOption(noDataOption);
+                    }
+                })
+                .catch(error => {
+                    console.error('获取体温数据失败:', error);
+                    const noDataOption = {
+                        title: {
+                            text: '获取数据失败',
+                            left: 'center',
+                            top: 'center',
+                            textStyle: {
+                                color: '#7f8c8d',
+                                fontSize: 16
+                            }
+                        }
+                    };
+                    bodyTempChart.setOption(noDataOption);
+                });
+        }
+        
+        // 获取健康预警
+        function fetchHealthAlerts() {
+            fetch(`/health-monitoring/alerts?residentId=${currentResidentId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const alerts = data.data;
+                        let alertsHTML = '';
+                        
+                        if (alerts.length > 0) {
+                            alerts.forEach(alert => {
+                                alertsHTML += `
+                                    <div class="alert-item">
+                                        ${alert.description}
+                                    </div>
+                                `;
+                            });
+                        } else {
+                            alertsHTML = '<div style="color: #7f8c8d; text-align: center; font-size: 14px; padding: 20px 0;">暂无预警信息</div>';
+                        }
+                        
+                        document.getElementById('alertsContainer').innerHTML = alertsHTML;
+                    }
+                })
+                .catch(error => {
+                    console.error('获取健康预警失败:', error);
+                });
+        }
+        
+        // 获取72小时趋势数据
+        function fetchTrendsData() {
+            // 这里可以根据需要获取更多生理指标的趋势数据
+            // 目前仅显示体温趋势作为示例
+            fetch(`/health-monitoring/body-temperature/${currentResidentId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data && data.data.length > 0) {
+                        const records = data.data;
+                        
+                        // 处理数据，只保留最近72小时的数据
+                        const now = new Date();
+                        const threeDaysAgo = new Date(now.getTime() - 72 * 60 * 60 * 1000);
+                        const recentRecords = records.filter(record => {
+                            const measureTime = new Date(record.measureTime);
+                            return measureTime >= threeDaysAgo;
+                        });
+                        
+                        if (recentRecords.length > 0) {
+                            // 按时间排序
+                            recentRecords.sort((a, b) => new Date(a.measureTime) - new Date(b.measureTime));
+                            
+                            const timestamps = recentRecords.map(record => new Date(record.measureTime).toLocaleDateString());
+                            const values = recentRecords.map(record => record.temperature);
+                            
+                            const trendsOption = {
+                                tooltip: {
+                                    trigger: 'axis',
+                                    formatter: '{b}: {c}°C'
+                                },
+                                grid: {
+                                    left: '3%',
+                                    right: '4%',
+                                    bottom: '3%',
+                                    containLabel: true
+                                },
+                                xAxis: {
+                                    type: 'category',
+                                    boundaryGap: false,
+                                    data: timestamps,
+                                    axisLabel: {
+                                        color: '#7f8c8d',
+                                        fontSize: 12
+                                    },
+                                    axisLine: {
+                                        lineStyle: {
+                                            color: '#353b48'
+                                        }
+                                    },
+                                    splitLine: {
+                                        lineStyle: {
+                                            color: '#353b48'
+                                        }
+                                    }
+                                },
+                                yAxis: {
+                                    type: 'value',
+                                    name: '体温 (°C)',
+                                    min: 35,
+                                    max: 40,
+                                    axisLabel: {
+                                        color: '#7f8c8d',
+                                        fontSize: 12
+                                    },
+                                    axisLine: {
+                                        lineStyle: {
+                                            color: '#353b48'
+                                        }
+                                    },
+                                    splitLine: {
+                                        lineStyle: {
+                                            color: '#353b48'
+                                        }
+                                    }
+                                },
+                                series: [{
+                                    name: '体温',
+                                    type: 'line',
+                                    data: values,
+                                    smooth: true,
+                                    itemStyle: {
+                                        color: '#3498db'
+                                    },
+                                    lineStyle: {
+                                        color: '#3498db',
+                                        width: 2
+                                    },
+                                    areaStyle: {
+                                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                            { offset: 0, color: 'rgba(52, 152, 219, 0.3)' },
+                                            { offset: 1, color: 'rgba(52, 152, 219, 0.1)' }
+                                        ])
+                                    }
+                                }]
+                            };
+                            trendsChart.setOption(trendsOption);
+                        } else {
+                            // 显示无数据
+                            const noDataOption = {
+                                title: {
+                                    text: '暂无趋势数据',
+                                    left: 'center',
+                                    top: 'center',
+                                    textStyle: {
+                                        color: '#7f8c8d',
+                                        fontSize: 16
+                                    }
+                                }
+                            };
+                            trendsChart.setOption(noDataOption);
+                        }
+                    } else {
+                        // 显示无数据
+                        const noDataOption = {
+                            title: {
+                                text: '暂无趋势数据',
+                                left: 'center',
+                                top: 'center',
+                                textStyle: {
+                                    color: '#7f8c8d',
+                                    fontSize: 16
+                                }
+                            }
+                        };
+                        trendsChart.setOption(noDataOption);
+                    }
+                })
+                .catch(error => {
+                    console.error('获取趋势数据失败:', error);
+                    const noDataOption = {
+                        title: {
+                            text: '暂无趋势数据',
+                            left: 'center',
+                            top: 'center',
+                            textStyle: {
+                                color: '#7f8c8d',
+                                fontSize: 16
+                            }
+                        }
+                    };
+                    trendsChart.setOption(noDataOption);
+                });
+        }
+        
+        // 监听居民选择变化
+        document.getElementById('residentSelect').addEventListener('change', function() {
+            refreshData();
+        });
+        
+        // 初始加载居民列表和数据
+        fetchResidents();
+        
+        // 每30秒自动刷新数据
+        setInterval(refreshData, 30000);
+        
+        // 窗口大小变化时，重新调整图表大小
+        window.addEventListener('resize', function() {
+            sleepQualityChart.resize();
+            bodyTempChart.resize();
+            trendsChart.resize();
+        });
+    </script>
+</body>
+</html>

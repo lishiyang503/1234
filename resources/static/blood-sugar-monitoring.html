@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>血糖监测可视化</title>
+    <!-- 引入ECharts -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .resident-selector {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .resident-selector select {
+            padding: 8px 12px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+        .resident-selector button {
+            padding: 8px 16px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .resident-selector button:hover {
+            background-color: #45a049;
+        }
+        .dashboard-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .chart-item {
+            flex: 1;
+            margin: 0 10px;
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+        .chart-item h2 {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+        #bloodSugarChart {
+            width: 100%;
+            height: 400px;
+        }
+        .health-advice {
+            background-color: #e8f5e8;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 5px solid #4CAF50;
+        }
+        .health-advice h2 {
+            color: #33691e;
+            margin-top: 0;
+        }
+        .health-advice ul {
+            color: #33691e;
+            line-height: 1.6;
+        }
+        .data-info {
+            background-color: #f0f8ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .data-info p {
+            margin: 5px 0;
+            color: #1565c0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>血糖监测可视化</h1>
+        
+        <!-- 老人选择器 -->
+        <div class="resident-selector">
+            <label for="residentSelect">选择老人：</label>
+            <select id="residentSelect"></select>
+            <button id="refreshBtn">刷新数据</button>
+        </div>
+        
+        <!-- 数据信息 -->
+        <div class="data-info" id="dataInfo"></div>
+        
+        <!-- 仪表盘容器 -->
+        <div class="dashboard-container">
+            <div class="chart-item">
+                <h2>血糖值 (mmol/L)</h2>
+                <div id="bloodSugarChart"></div>
+            </div>
+        </div>
+        
+        <!-- 健康建议 -->
+        <div class="health-advice" id="healthAdvice">
+            <h2>健康建议</h2>
+            <p>请先选择老人查看健康建议</p>
+        </div>
+    </div>
+
+    <script>
+        // 初始化ECharts实例
+        var bloodSugarChart = echarts.init(document.getElementById('bloodSugarChart'));
+        
+        // 血糖仪表盘配置
+        var bloodSugarOption = {
+            series: [{
+                type: 'gauge',
+                startAngle: 180,
+                endAngle: 0,
+                min: 0,
+                max: 20,
+                splitNumber: 8,
+                axisLine: {
+                    lineStyle: {
+                        width: 30,
+                        color: [
+                            [0.3, '#67e0e3'],
+                            [0.6, '#37a2da'],
+                            [0.8, '#ffb74d'],
+                            [1, '#ff4d4f']
+                        ]
+                    }
+                },
+                pointer: {
+                    icon: 'path://M12.8,0.7l12,40.1H0.7L12.8,0.7z',
+                    length: '12%',
+                    width: 20,
+                    offsetCenter: [0, '-60%'],
+                    itemStyle: {
+                        color: 'auto'
+                    }
+                },
+                axisTick: {
+                    length: 12,
+                    lineStyle: {
+                        color: 'auto',
+                        width: 2
+                    }
+                },
+                splitLine: {
+                    length: 20,
+                    lineStyle: {
+                        color: 'auto',
+                        width: 5
+                    }
+                },
+                axisLabel: {
+                    color: '#464646',
+                    fontSize: 20,
+                    distance: -60,
+                    formatter: function (value) {
+                        if (value === 0) {
+                            return '0';
+                        } else if (value === 5) {
+                            return '5';
+                        } else if (value === 10) {
+                            return '10';
+                        } else if (value === 15) {
+                            return '15';
+                        } else if (value === 20) {
+                            return '20';
+                        }
+                        return '';
+                    }
+                },
+                title: {
+                    offsetCenter: [0, '-10%'],
+                    fontSize: 20
+                },
+                detail: {
+                    fontSize: 40,
+                    offsetCenter: [0, '-35%'],
+                    valueAnimation: true,
+                    formatter: function (value) {
+                        return value.toFixed(1) + ' mmol/L';
+                    },
+                    color: 'auto'
+                },
+                data: [{
+                    value: 0,
+                    name: '血糖值'
+                }]
+            }]
+        };
+        
+        // 设置初始配置
+        bloodSugarChart.setOption(bloodSugarOption);
+        
+        // 获取老人列表
+        function getResidents() {
+            fetch('http://localhost:8990/health-monitoring/residents')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        var residents = data.data;
+                        var select = document.getElementById('residentSelect');
+                        select.innerHTML = '';
+                        
+                        residents.forEach(resident => {
+                            var option = document.createElement('option');
+                            option.value = resident.id;
+                            option.textContent = resident.name + ' (' + resident.room_number + '-' + resident.bed_number + ')';
+                            select.appendChild(option);
+                        });
+                        
+                        // 默认加载第一个老人的数据
+                        if (residents.length > 0) {
+                            loadBloodSugarData(residents[0].id);
+                        }
+                    } else {
+                        alert('获取老人列表失败：' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('获取老人列表失败：', error);
+                    alert('获取老人列表失败');
+                });
+        }
+        
+        // 加载血糖数据
+        function loadBloodSugarData(residentId) {
+            fetch('http://localhost:8990/health/blood-sugar/latest/' + residentId)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        var bloodSugar = data.data;
+                        updateChart(bloodSugar);
+                        updateDataInfo(bloodSugar);
+                        generateHealthAdvice(bloodSugar);
+                    } else {
+                        alert('获取血糖数据失败：' + data.message);
+                        // 清空数据
+                        updateChart(null);
+                        updateDataInfo(null);
+                        generateHealthAdvice(null);
+                    }
+                })
+                .catch(error => {
+                    console.error('获取血糖数据失败：', error);
+                    alert('获取血糖数据失败');
+                    // 清空数据
+                    updateChart(null);
+                    updateDataInfo(null);
+                    generateHealthAdvice(null);
+                });
+        }
+        
+        // 更新图表
+        function updateChart(bloodSugar) {
+            var value = bloodSugar ? bloodSugar.value : 0;
+            var option = bloodSugarChart.getOption();
+            option.series[0].data[0].value = value;
+            bloodSugarChart.setOption(option);
+        }
+        
+        // 更新数据信息
+        function updateDataInfo(bloodSugar) {
+            var dataInfo = document.getElementById('dataInfo');
+            if (bloodSugar) {
+                dataInfo.innerHTML = `
+                    <p><strong>测量时间：</strong>${bloodSugar.measureTime}</p>
+                    <p><strong>血糖值：</strong>${bloodSugar.value} mmol/L</p>
+                    <p><strong>测量状态：</strong>${bloodSugar.measureStatus}</p>
+                    <p><strong>备注：</strong>${bloodSugar.notes || '无'}</p>
+                `;
+            } else {
+                dataInfo.innerHTML = '<p>暂无血糖数据</p>';
+            }
+        }
+        
+        // 生成健康建议
+        function generateHealthAdvice(bloodSugar) {
+            var healthAdvice = document.getElementById('healthAdvice');
+            if (!bloodSugar) {
+                healthAdvice.innerHTML = '<h2>健康建议</h2><p>暂无数据，无法生成健康建议</p>';
+                return;
+            }
+            
+            var value = bloodSugar.value;
+            var advice = '';
+            
+            if (value < 3.9) {
+                // 低血糖
+                advice = `
+                    <h2>低血糖</h2>
+                    <ul>
+                        <li>立即补充糖分：可食用糖果、巧克力或喝糖水</li>
+                        <li>休息15分钟后再次测量血糖</li>
+                        <li>若症状严重（如头晕、乏力），请及时就医</li>
+                        <li>调整饮食结构，增加碳水化合物摄入</li>
+                        <li>规律进食，避免长时间空腹</li>
+                    </ul>
+                `;
+            } else if (value >= 3.9 && value < 7.0) {
+                // 正常血糖
+                advice = `
+                    <h2>血糖正常</h2>
+                    <ul>
+                        <li>继续保持良好的饮食和生活习惯</li>
+                        <li>定期监测血糖，建议每周测量1-2次</li>
+                        <li>适量运动，保持健康体重</li>
+                        <li>多吃蔬菜、水果，少吃高糖、高脂肪食物</li>
+                        <li>保持充足睡眠，避免熬夜</li>
+                    </ul>
+                `;
+            } else if (value >= 7.0 && value < 11.1) {
+                // 高血糖
+                advice = `
+                    <h2>高血糖</h2>
+                    <ul>
+                        <li>减少碳水化合物摄入，避免高糖食物</li>
+                        <li>增加运动量，促进血糖代谢</li>
+                        <li>多喝水，促进排尿，帮助降低血糖</li>
+                        <li>定期监测血糖变化</li>
+                        <li>若持续高血糖，建议咨询医生调整治疗方案</li>
+                    </ul>
+                `;
+            } else {
+                // 严重高血糖
+                advice = `
+                    <h2>严重高血糖</h2>
+                    <ul>
+                        <li>立即就医，接受专业治疗</li>
+                        <li>严格控制饮食，避免所有高糖食物</li>
+                        <li>按照医生建议使用降糖药物</li>
+                        <li>密切监测血糖变化，每1-2小时测量一次</li>
+                        <li>注意休息，避免劳累和情绪波动</li>
+                    </ul>
+                `;
+            }
+            
+            healthAdvice.innerHTML = advice;
+        }
+        
+        // 刷新数据按钮点击事件
+        document.getElementById('refreshBtn').addEventListener('click', function() {
+            var residentId = document.getElementById('residentSelect').value;
+            if (residentId) {
+                loadBloodSugarData(residentId);
+            }
+        });
+        
+        // 老人选择变化事件
+        document.getElementById('residentSelect').addEventListener('change', function() {
+            var residentId = this.value;
+            if (residentId) {
+                loadBloodSugarData(residentId);
+            }
+        });
+        
+        // 页面加载时获取老人列表
+        window.onload = function() {
+            getResidents();
+        };
+        
+        // 定期刷新数据（30秒）
+        setInterval(function() {
+            var residentId = document.getElementById('residentSelect').value;
+            if (residentId) {
+                loadBloodSugarData(residentId);
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
